@@ -393,7 +393,7 @@
   <div class="app">
     <header>
       <div>
-        <h1 class="title">Rep Timer</h1>
+        <h1 class="title">Rep Timer v0.11</h1>
         <div class="subtitle">Offline rep/set interval timer</div>
       </div>
       <div class="header-actions">
@@ -1078,39 +1078,47 @@
          a warning instead of pretending sound is guaranteed.
        ========================================================= */
     function initAudio(forceUnlock) {
-      if (audioReady && audioCtx && audioCtx.state === "running") return Promise.resolve(true);
-      if (audioUnlocking) return audioUnlocking;
+      if (audioReady && audioCtx && audioCtx.state === "running" && !forceUnlock) return Promise.resolve(true);
       try {
         const Ctx = window.AudioContext || window.webkitAudioContext;
         if (!Ctx) throw new Error("Web Audio unavailable");
         audioCtx = audioCtx || new Ctx();
-        const resumePromise = audioCtx.state !== "running" ? audioCtx.resume() : Promise.resolve();
-        audioUnlocking = resumePromise.then(function () {
-          if (forceUnlock) {
-            // Play a real (near-silent) buffer through the graph. On iOS this
-            // is a more reliable unlock than an oscillator start/stop pair.
-            const buffer = audioCtx.createBuffer(1, 1, 22050);
-            const src = audioCtx.createBufferSource();
-            src.buffer = buffer;
-            src.connect(audioCtx.destination);
-            src.start(0);
-            const g = audioCtx.createGain();
-            g.gain.value = 0.00001;
-            const o = audioCtx.createOscillator();
-            o.frequency.value = 440;
-            o.connect(g).connect(audioCtx.destination);
-            o.start();
-            o.stop(audioCtx.currentTime + 0.03);
-          }
-          audioReady = audioCtx.state === "running";
-          updateSoundStatus();
-          audioUnlocking = null;
-          return audioReady;
-        }).catch(function () {
-          audioReady = false;
-          audioUnlocking = null;
-          updateSoundStatus();
-          return false;
+
+        // CRITICAL for iOS: everything below must run synchronously, in the
+        // same call stack as the click/tap handler. Deferring any of this
+        // into a Promise.then() (even one chained off audioCtx.resume())
+        // means it runs on a later microtask that WebKit no longer treats
+        // as "inside" the user gesture, and the unlock silently fails even
+        // though audioCtx.state reports "running".
+        if (audioCtx.state !== "running") {
+          audioCtx.resume(); // fire synchronously; do not await before unlocking
+        }
+        if (forceUnlock) {
+          const buffer = audioCtx.createBuffer(1, 1, 22050);
+          const src = audioCtx.createBufferSource();
+          src.buffer = buffer;
+          src.connect(audioCtx.destination);
+          src.start(0);
+          const g = audioCtx.createGain();
+          g.gain.value = 0.00001;
+          const o = audioCtx.createOscillator();
+          o.frequency.value = 440;
+          o.connect(g).connect(audioCtx.destination);
+          o.start();
+          o.stop(audioCtx.currentTime + 0.03);
+        }
+
+        // Status/readiness can be settled asynchronously — that part is
+        // safe to poll, only the unlock actions above had to be synchronous.
+        audioUnlocking = new Promise(function (resolve) {
+          let tries = 0;
+          (function check() {
+            audioReady = audioCtx.state === "running";
+            updateSoundStatus();
+            if (audioReady || tries >= 10) { audioUnlocking = null; resolve(audioReady); return; }
+            tries += 1;
+            setTimeout(check, 60);
+          })();
         });
         return audioUnlocking;
       } catch (err) {
