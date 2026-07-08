@@ -348,6 +348,11 @@
     .preview-list { max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius); }
     .preview-item { display: grid; grid-template-columns: 84px 1fr 66px; gap: 8px; padding: 9px 10px; border-bottom: 1px solid var(--border); align-items: center; }
     .preview-item:last-child { border-bottom: 0; }
+    .manual-list { max-height: 420px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+    .manual-row { display: grid; grid-template-columns: 58px 1fr 86px; gap: 8px; padding: 9px 10px; border-bottom: 1px solid var(--border); align-items: center; }
+    .manual-row:last-child { border-bottom: 0; }
+    .manual-row input { min-height: 38px; padding: 6px 8px; }
+    .formula-note { margin-top: 10px; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
     .pill { display: inline-block; border: 1px solid var(--border-strong); border-radius: 999px; padding: 4px 9px; font-size: 11.5px; font-weight: 800; color: var(--muted); }
 
     .modal-backdrop {
@@ -381,6 +386,7 @@
       .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr; }
       .secondary-controls { grid-template-columns: 1fr; }
       .preview-item { grid-template-columns: 70px 1fr 54px; font-size: 13px; }
+      .manual-row { grid-template-columns: 46px 1fr 76px; font-size: 13px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -393,7 +399,7 @@
   <div class="app">
     <header>
       <div>
-        <h1 class="title">Rep Timer v0.12</h1>
+        <h1 class="title">Rep Timer v0.13</h1>
         <div class="subtitle">Offline rep/set interval timer</div>
       </div>
       <div class="header-actions">
@@ -545,6 +551,18 @@
           </div>
           <div id="previewSummary" class="notice hidden" style="margin-top:10px;"></div>
           <div id="previewList" class="preview-list hidden" style="margin-top:10px;"></div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Manual sequence times</h2>
+          <p class="muted">Generate the current sequence, then override the duration of any individual phase. Manual values take priority over phase durations and increment rules.</p>
+          <div class="actions">
+            <button id="generateManualTimesBtn" type="button">Generate editable sequence</button>
+            <button id="applyManualTimesBtn" class="ok" type="button">Apply manual times</button>
+            <button id="clearManualTimesBtn" class="warning" type="button">Clear manual times</button>
+          </div>
+          <div id="manualTimesMessage" class="notice hidden" style="margin-top:10px;"></div>
+          <div id="manualTimesList" class="manual-list hidden" style="margin-top:10px;"></div>
         </div>
       </section>
 
@@ -708,7 +726,7 @@
        ========================================================= */
     const STORAGE_KEY = "repTimer.userConfig.v1";
     const SELECTED_KEY = "repTimer.selectedPreset.v1";
-    const SOUND_NAMES = ["silent", "softBell", "sharpBell", "doubleBeep", "lowBeep", "longBell", "successChime", "warningTone"];
+    const SOUND_NAMES = ["silent", "softBell", "sharpBell", "doubleBeep", "lowBeep", "longBell", "successChime", "warningTone", "tripleBeep", "urgentAlarm", "longWarning", "countdownBeeps", "siren", "attentionPulse"];
     const PHASE_ORDER = ["prepare", "rep", "afterRep", "rest", "setRest"];
     const PHASE_TITLES = { prepare: "Prepare", rep: "Rep", afterRep: "After Rep", rest: "Rest", setRest: "Set Rest" };
 
@@ -813,10 +831,12 @@
         if (!["increase", "decrease"].includes(p.increments[key].direction)) p.increments[key].direction = "increase";
         p.increments[key].amount = clampNumber(p.increments[key].amount, 0, 100000, 0);
         if (!["rep", "set"].includes(p.increments[key].applyEvery)) p.increments[key].applyEvery = key === "setRest" ? "set" : "rep";
+        p.increments[key].resetEachSet = Boolean(p.increments[key].resetEachSet);
         p.increments[key].minSeconds = clampNumber(p.increments[key].minSeconds, 0, 86400, 0);
         p.increments[key].maxSeconds = clampNumber(p.increments[key].maxSeconds, p.increments[key].minSeconds, 86400, 3600);
         if (!["nearestSecond", "floor", "ceil"].includes(p.increments[key].rounding)) p.increments[key].rounding = "nearestSecond";
       });
+      p.manualTimes = sanitizeManualTimes(p.manualTimes);
       p.controls = Object.assign({ allowPauseResume: true, allowSkipCurrentPhase: true, allowSkipNextRep: true, allowSkipNextSet: true }, p.controls || {});
       return p;
     }
@@ -856,7 +876,9 @@
 
     function calcDuration(base, inc, repNumber, setNumber, repsPerSet) {
       if (!inc || inc.mode === "fixed") return Math.max(0, base);
-      const step = inc.applyEvery === "set" ? setNumber - 1 : ((setNumber - 1) * repsPerSet + repNumber - 1);
+      let step;
+      if (inc.applyEvery === "set") step = setNumber - 1;
+      else step = inc.resetEachSet ? repNumber - 1 : ((setNumber - 1) * repsPerSet + repNumber - 1);
       let val = base;
       if (inc.mode === "linear") {
         val = inc.direction === "increase" ? base + inc.amount * step : base - inc.amount * step;
@@ -912,11 +934,35 @@
           pushIf(timeline, makeItem(preset, "setRest", set, preset.repsPerSet, setRestDur));
         }
       }
-      timeline.push({ type: "complete", label: "Complete", durationSeconds: 0, setNumber: preset.sets, totalSets: preset.sets, repNumber: preset.repsPerSet, totalReps: preset.repsPerSet, color: "#16a34a", textColor: "#ffffff", sound: "successChime", alertMode: "auto", alertSeconds: 2 });
+      timeline.push({ type: "complete", key: "complete", label: "Complete", durationSeconds: 0, setNumber: preset.sets, totalSets: preset.sets, repNumber: preset.repsPerSet, totalReps: preset.repsPerSet, color: "#16a34a", textColor: "#ffffff", sound: "successChime", alertMode: "auto", alertSeconds: 2 });
+      applyManualTimes(preset, timeline);
       return timeline;
     }
 
     function pushIf(arr, item) { if (item) arr.push(item); }
+
+    function makeTimelineKey(type, setNumber, repNumber) {
+      return [type, "s" + (setNumber || 0), "r" + (repNumber || 0)].join("|");
+    }
+
+    function applyManualTimes(preset, timeline) {
+      const manual = sanitizeManualTimes(preset && preset.manualTimes);
+      timeline.forEach(function (item) {
+        if (!item || item.type === "complete") return;
+        const key = item.key || makeTimelineKey(item.type, item.setNumber, item.repNumber);
+        if (Object.prototype.hasOwnProperty.call(manual, key)) item.durationSeconds = manual[key];
+      });
+    }
+
+    function sanitizeManualTimes(input) {
+      const out = {};
+      if (!input || typeof input !== "object") return out;
+      Object.keys(input).forEach(function (key) {
+        const val = clampNumber(input[key], 0, 86400, NaN);
+        if (Number.isFinite(val)) out[key] = val;
+      });
+      return out;
+    }
 
     /* =========================================================
        Timer engine
@@ -1182,6 +1228,12 @@
       else if (name === "longBell") { tone(523, 0, .50, .13); tone(784, .08, .62, .10); }
       else if (name === "successChime") { tone(523, 0, .16, .12); tone(659, .16, .16, .12); tone(784, .32, .34, .13); }
       else if (name === "warningTone") { tone(220, 0, .22, .15, "square"); tone(220, .32, .22, .15, "square"); }
+      else if (name === "tripleBeep") { tone(880, 0, .12, .16); tone(880, .18, .12, .16); tone(880, .36, .12, .16); }
+      else if (name === "urgentAlarm") { tone(740, 0, .18, .18, "square"); tone(370, .20, .18, .18, "square"); tone(740, .40, .18, .18, "square"); tone(370, .60, .18, .18, "square"); }
+      else if (name === "longWarning") { tone(196, 0, .65, .18, "sawtooth"); tone(196, .78, .65, .18, "sawtooth"); tone(294, 1.56, .75, .16, "square"); }
+      else if (name === "countdownBeeps") { tone(660, 0, .10, .14); tone(660, .35, .10, .14); tone(660, .70, .10, .14); tone(990, 1.05, .35, .18); }
+      else if (name === "siren") { for (let i = 0; i < 8; i++) tone(i % 2 ? 520 : 880, i * .18, .16, .13, "sawtooth"); }
+      else if (name === "attentionPulse") { tone(440, 0, .20, .15, "triangle"); tone(554, .28, .20, .15, "triangle"); tone(659, .56, .35, .14, "triangle"); }
     }
 
     function playSound(name) {
@@ -1424,10 +1476,12 @@
             <div><label for="inc_${key}_direction">Direction</label><select id="inc_${key}_direction"><option value="increase">Increase</option><option value="decrease">Decrease</option></select></div>
             <div><label for="inc_${key}_amount">Amount</label><input id="inc_${key}_amount" type="number" min="0" step="0.1"></div>
             <div><label for="inc_${key}_applyEvery">Apply every</label><select id="inc_${key}_applyEvery"><option value="rep">Rep</option><option value="set">Set</option></select></div>
+            <div class="checkbox-line"><input id="inc_${key}_resetEachSet" type="checkbox"><label for="inc_${key}_resetEachSet">Reset increment each set</label></div>
             <div><label for="inc_${key}_minSeconds">Min seconds</label><input id="inc_${key}_minSeconds" type="number" min="0" step="1"></div>
             <div><label for="inc_${key}_maxSeconds">Max seconds</label><input id="inc_${key}_maxSeconds" type="number" min="0" step="1"></div>
             <div><label for="inc_${key}_rounding">Rounding</label><select id="inc_${key}_rounding"><option value="nearestSecond">Nearest second</option><option value="floor">Floor</option><option value="ceil">Ceil</option></select></div>
-          </div>`;
+          </div>
+          <div class="formula-note">Proportional uses repeated percentage compounding: duration = base × (1 ± amount/100)<sup>step</sup>. Example: base 20s, +10%, step 0/1/2 gives 20s, 22s, 24.2s before rounding. The step normally continues across sets; enable reset to restart at step 0 in every set.</div>`;
         container.appendChild(d);
       });
     }
@@ -1457,10 +1511,16 @@
         $("inc_" + key + "_direction").value = inc.direction;
         $("inc_" + key + "_amount").value = inc.amount;
         $("inc_" + key + "_applyEvery").value = inc.applyEvery;
+        $("inc_" + key + "_resetEachSet").checked = Boolean(inc.resetEachSet);
         $("inc_" + key + "_minSeconds").value = inc.minSeconds;
         $("inc_" + key + "_maxSeconds").value = inc.maxSeconds;
         $("inc_" + key + "_rounding").value = inc.rounding;
       });
+      const list = $("manualTimesList");
+      if (list) { list.innerHTML = ""; list.classList.add("hidden"); }
+      const msg = $("manualTimesMessage");
+      if (msg) msg.classList.add("hidden");
+      if (editingPreset.manualTimes && Object.keys(editingPreset.manualTimes).length) renderManualTimesEditor(editingPreset);
     }
 
     function readEditor() {
@@ -1489,11 +1549,13 @@
           direction: $("inc_" + key + "_direction").value,
           amount: clampNumber($("inc_" + key + "_amount").value, 0, 100000, 0),
           applyEvery: $("inc_" + key + "_applyEvery").value,
+          resetEachSet: $("inc_" + key + "_resetEachSet").checked,
           minSeconds: clampNumber($("inc_" + key + "_minSeconds").value, 0, 86400, 0),
           maxSeconds: clampNumber($("inc_" + key + "_maxSeconds").value, 0, 86400, 3600),
           rounding: $("inc_" + key + "_rounding").value
         };
       });
+      p.manualTimes = sanitizeManualTimes(p.manualTimes);
       return sanitizePreset(p, 0);
     }
 
@@ -1521,7 +1583,8 @@
       const summary = `Total: <strong>${formatTime(total)}</strong> · Sets: <strong>${preset.sets}</strong> · Reps: <strong>${preset.repsPerSet}</strong><br>
         Rep durations: ${summarizeDurations(repDurations)}<br>
         Rest durations: ${summarizeDurations(restDurations)}<br>
-        Set rest durations: ${summarizeDurations(setRestDurations)}`;
+        Set rest durations: ${summarizeDurations(setRestDurations)}<br>
+        Proportional formula: base × (1 ± amount/100)<sup>step</sup>. Step starts at 0 and either continues across all sets or resets each set when that option is enabled.`;
       $("previewSummary").innerHTML = summary;
       $("previewSummary").classList.remove("hidden");
       const list = $("previewList");
@@ -1534,6 +1597,54 @@
         list.appendChild(div);
       }
       list.classList.remove("hidden");
+    }
+
+    function renderManualTimesEditor(preset = readEditor()) {
+      const list = $("manualTimesList");
+      const msg = $("manualTimesMessage");
+      if (!list || !msg) return;
+      const tl = buildTimeline(preset).filter(function (item) { return item.type !== "complete"; });
+      list.innerHTML = "";
+      if (!tl.length) {
+        showMessage("manualTimesMessage", "No editable phases were generated.", true);
+        return;
+      }
+      tl.forEach(function (item, i) {
+        const row = document.createElement("div");
+        row.className = "manual-row";
+        const key = item.key || makeTimelineKey(item.type, item.setNumber, item.repNumber);
+        const rep = item.repNumber ? " · R" + item.repNumber + "/" + item.totalReps : "";
+        const set = item.setNumber ? "S" + item.setNumber + "/" + item.totalSets : "";
+        row.innerHTML = '<span class="pill">' + (i + 1) + '</span><div><strong>' + escapeHtml(item.label || item.type) + '</strong><div class="muted">' + escapeHtml(set + rep) + '</div></div><input class="manual-time-input" data-key="' + escapeHtml(key) + '" type="number" min="0" step="1" value="' + Math.round(item.durationSeconds || 0) + '">';
+        list.appendChild(row);
+      });
+      list.classList.remove("hidden");
+      showMessage("manualTimesMessage", "Editable sequence generated. Change seconds, then press Apply manual times.");
+    }
+
+    function applyManualTimesFromEditor() {
+      const preset = readEditor();
+      const inputs = document.querySelectorAll(".manual-time-input");
+      if (!inputs.length) { renderManualTimesEditor(preset); return; }
+      const manual = {};
+      inputs.forEach(function (input) {
+        const key = input.getAttribute("data-key");
+        const val = clampNumber(input.value, 0, 86400, NaN);
+        if (key && Number.isFinite(val)) manual[key] = Math.round(val);
+      });
+      preset.manualTimes = manual;
+      editingPreset = preset;
+      showPreview(preset);
+      showMessage("manualTimesMessage", "Manual times applied in the editor. Press Save to keep them in the preset.");
+    }
+
+    function clearManualTimesEditor() {
+      const preset = readEditor();
+      preset.manualTimes = {};
+      editingPreset = preset;
+      renderManualTimesEditor(preset);
+      showPreview(preset);
+      showMessage("manualTimesMessage", "Manual times cleared. Generated durations are active again.");
     }
 
     function summarizeDurations(arr) {
@@ -1701,6 +1812,9 @@
         { text: "Reset", cls: "warning", action: () => { userConfig = deepClone(DEFAULT_CONFIG); selectedPresetId = userConfig.presets[0].id; saveConfig(); hideModal(); renderAll(); } }
       ]);
       $("previewEditedPresetBtn").onclick = () => showPreview(readEditor());
+      $("generateManualTimesBtn").onclick = () => renderManualTimesEditor(readEditor());
+      $("applyManualTimesBtn").onclick = applyManualTimesFromEditor;
+      $("clearManualTimesBtn").onclick = clearManualTimesEditor;
       $("loadPresetEditorBtn").onclick = () => {
         const id = $("editorPresetSelect").value;
         const p = userConfig.presets.find(x => x.id === id);
