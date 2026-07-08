@@ -1,0 +1,1347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Rep Timer">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#0f172a">
+  <title>Rep Timer</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --panel-2: #1f2937;
+      --text: #f8fafc;
+      --muted: #cbd5e1;
+      --border: rgba(255,255,255,.16);
+      --accent: #38bdf8;
+      --danger: #ef4444;
+      --ok: #22c55e;
+      --warning: #f59e0b;
+      --shadow: rgba(0,0,0,.25);
+      --phase-bg: #166534;
+      --phase-text: #ffffff;
+      --radius: 18px;
+      --button-bg: rgba(255,255,255,.12);
+      --button-text: #ffffff;
+      --input-bg: rgba(255,255,255,.08);
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --panel-2: #e2e8f0;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: rgba(15,23,42,.16);
+      --button-bg: rgba(15,23,42,.08);
+      --button-text: #0f172a;
+      --input-bg: rgba(15,23,42,.06);
+      --shadow: rgba(15,23,42,.12);
+    }
+
+    [data-theme="contrast"] {
+      --bg: #000000;
+      --panel: #000000;
+      --panel-2: #111111;
+      --text: #ffffff;
+      --muted: #ffffff;
+      --border: #ffffff;
+      --accent: #ffff00;
+      --button-bg: #ffffff;
+      --button-text: #000000;
+      --input-bg: #111111;
+      --danger: #ff5555;
+      --ok: #00ff66;
+      --warning: #ffff00;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.35;
+      -webkit-font-smoothing: antialiased;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    button, input, select, textarea { font: inherit; }
+    button {
+      border: 1px solid var(--border);
+      background: var(--button-bg);
+      color: var(--button-text);
+      min-height: 46px;
+      padding: 11px 14px;
+      border-radius: 14px;
+      cursor: pointer;
+      touch-action: manipulation;
+      font-weight: 700;
+    }
+    button:active { transform: scale(.985); }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+    button.primary { background: var(--accent); color: #001018; border-color: transparent; }
+    button.danger { background: var(--danger); color: white; border-color: transparent; }
+    button.ok { background: var(--ok); color: #02120a; border-color: transparent; }
+    button.warning { background: var(--warning); color: #1a1200; border-color: transparent; }
+    button.ghost { background: transparent; }
+    button.small { min-height: 38px; padding: 8px 10px; border-radius: 10px; font-weight: 650; }
+    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--input-bg);
+      color: var(--text);
+      min-height: 44px;
+      padding: 10px 11px;
+      border-radius: 12px;
+    }
+    input[type="checkbox"] { width: 22px; min-height: 22px; accent-color: var(--accent); }
+    input[type="color"] { min-height: 44px; padding: 4px; }
+    textarea { min-height: 110px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; }
+    label { display: block; color: var(--muted); font-size: 13px; font-weight: 750; margin-bottom: 6px; }
+    .checkbox-line { display: flex; gap: 10px; align-items: center; min-height: 44px; }
+    .checkbox-line label { margin: 0; color: var(--text); }
+
+    .app { width: min(100%, 980px); margin: 0 auto; padding: 14px; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .title { margin: 0; font-size: 22px; letter-spacing: -.02em; }
+    .subtitle { color: var(--muted); font-size: 13px; margin-top: 3px; }
+    .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 14px; }
+    .tabs button { min-height: 40px; font-size: 13px; padding: 8px; }
+    .tabs button.active { background: var(--accent); color: #001018; border-color: transparent; }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: 0 12px 30px var(--shadow);
+      margin-bottom: 12px;
+    }
+    .row { display: grid; gap: 10px; }
+    .cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .hidden { display: none !important; }
+    .muted { color: var(--muted); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .notice { border-left: 4px solid var(--accent); padding: 10px 12px; background: rgba(56,189,248,.1); border-radius: 12px; color: var(--text); }
+    .error { border-left-color: var(--danger); background: rgba(239,68,68,.12); }
+    .success { border-left-color: var(--ok); background: rgba(34,197,94,.12); }
+
+    .timer-screen {
+      background: var(--phase-bg);
+      color: var(--phase-text);
+      border-radius: 28px;
+      padding: 20px 14px;
+      text-align: center;
+      min-height: 390px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: 0 14px 38px var(--shadow);
+    }
+    .phase-label {
+      font-size: clamp(36px, 12vw, 92px);
+      line-height: .95;
+      font-weight: 950;
+      letter-spacing: -.05em;
+      text-transform: uppercase;
+      margin: 8px 0;
+      word-break: break-word;
+    }
+    .countdown {
+      font-size: clamp(58px, 19vw, 148px);
+      line-height: .9;
+      font-weight: 950;
+      letter-spacing: -.08em;
+      font-variant-numeric: tabular-nums;
+      margin: 10px 0 18px;
+    }
+    .counter-strip {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin: 8px auto 12px;
+      width: min(100%, 560px);
+    }
+    .counter-box {
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.30);
+      border-radius: 16px;
+      padding: 12px;
+    }
+    .counter-box .num { font-size: clamp(22px, 7vw, 40px); font-weight: 950; font-variant-numeric: tabular-nums; }
+    .counter-box .cap { font-size: 12px; opacity: .85; font-weight: 750; text-transform: uppercase; letter-spacing: .05em; }
+    .timer-meta { font-weight: 750; opacity: .92; margin: 4px 0; }
+    .timer-controls { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-top: 12px; }
+    .timer-controls button { background: rgba(0,0,0,.23); color: inherit; border-color: rgba(255,255,255,.34); }
+    .timer-controls button.primary { background: rgba(255,255,255,.86); color: #000; }
+
+    .section-title { margin: 0 0 10px; font-size: 17px; }
+    .phase-grid { display: grid; gap: 10px; }
+    details {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      border-radius: 16px;
+      padding: 10px;
+    }
+    summary { cursor: pointer; font-weight: 850; min-height: 34px; display: flex; align-items: center; }
+    summary::-webkit-details-marker { display: none; }
+    .phase-editor-body { margin-top: 10px; }
+    .preview-list { max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: 14px; }
+    .preview-item { display: grid; grid-template-columns: 84px 1fr 66px; gap: 8px; padding: 9px 10px; border-bottom: 1px solid var(--border); align-items: center; }
+    .preview-item:last-child { border-bottom: 0; }
+    .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 4px 8px; font-size: 12px; font-weight: 800; color: var(--muted); }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 100;
+    }
+    .modal {
+      width: min(100%, 460px);
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 16px;
+      box-shadow: 0 24px 70px rgba(0,0,0,.55);
+    }
+    .modal h2 { margin: 0 0 8px; }
+    .modal .actions { margin-top: 14px; }
+
+    @media (max-width: 720px) {
+      .app { padding: 10px; }
+      .tabs { grid-template-columns: repeat(2, 1fr); }
+      .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr; }
+      .timer-controls { grid-template-columns: 1fr 1fr; }
+      .preview-item { grid-template-columns: 70px 1fr 54px; font-size: 13px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+      button:active { transform: none; }
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="app">
+    <header>
+      <div>
+        <h1 class="title">Rep Timer</h1>
+        <div class="subtitle">Offline rep/set interval timer</div>
+      </div>
+      <button id="installHelpBtn" class="small ghost" type="button">Home Screen</button>
+    </header>
+
+    <nav class="tabs" aria-label="Main sections">
+      <button id="tabTimer" class="active" type="button">Timer</button>
+      <button id="tabPresets" type="button">Presets</button>
+      <button id="tabImport" type="button">JSON</button>
+      <button id="tabSettings" type="button">Settings</button>
+    </nav>
+
+    <main>
+      <section id="viewTimer">
+        <div id="timerScreen" class="timer-screen" aria-live="polite">
+          <div class="timer-meta" id="soundStatus">Sound: tap Start to enable</div>
+          <div class="phase-label" id="phaseLabel">Ready</div>
+          <div class="countdown" id="countdown">00:00</div>
+          <div class="counter-strip">
+            <div class="counter-box">
+              <div class="num" id="repCounter">Rep 0 / 0</div>
+              <div class="cap">Rep</div>
+            </div>
+            <div class="counter-box">
+              <div class="num" id="setCounter">Set 0 / 0</div>
+              <div class="cap">Set</div>
+            </div>
+          </div>
+          <div class="timer-meta" id="nextPhase">Next: —</div>
+          <div class="timer-meta" id="presetName">Preset: —</div>
+          <div class="timer-controls">
+            <button id="startPauseBtn" class="primary" type="button">Start</button>
+            <button id="skipPhaseBtn" type="button">Skip Phase</button>
+            <button id="skipRepBtn" type="button">Skip Rep</button>
+            <button id="skipSetBtn" type="button">Skip Set</button>
+            <button id="resetBtn" class="danger" type="button">Reset</button>
+            <button id="previewFromTimerBtn" type="button">Preview</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Selected preset</h2>
+          <div class="row cols-2">
+            <div>
+              <label for="presetSelect">Preset</label>
+              <select id="presetSelect"></select>
+            </div>
+            <div>
+              <label for="themeSelectTop">Theme</label>
+              <select id="themeSelectTop">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+                <option value="contrast">High contrast</option>
+              </select>
+            </div>
+          </div>
+          <p class="muted" id="presetDescription"></p>
+        </div>
+      </section>
+
+      <section id="viewPresets" class="hidden">
+        <div class="card">
+          <h2 class="section-title">Preset editor</h2>
+          <div class="actions">
+            <button id="newPresetBtn" type="button">New</button>
+            <button id="duplicatePresetBtn" type="button">Duplicate</button>
+            <button id="savePresetBtn" class="ok" type="button">Save</button>
+            <button id="deletePresetBtn" class="danger" type="button">Delete</button>
+            <button id="resetDefaultsBtn" class="warning" type="button">Reset Defaults</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row cols-2">
+            <div>
+              <label for="editName">Preset name</label>
+              <input id="editName" type="text" autocomplete="off">
+            </div>
+            <div>
+              <label for="editId">Preset ID</label>
+              <input id="editId" type="text" autocomplete="off">
+            </div>
+            <div>
+              <label for="editSets">Sets</label>
+              <input id="editSets" type="number" min="1" step="1">
+            </div>
+            <div>
+              <label for="editReps">Reps per set</label>
+              <input id="editReps" type="number" min="1" step="1">
+            </div>
+            <div>
+              <label for="editPrepareScope">Prepare scope</label>
+              <select id="editPrepareScope">
+                <option value="workout">Once per workout</option>
+                <option value="set">Before each set</option>
+                <option value="rep">Before each rep</option>
+              </select>
+            </div>
+            <div>
+              <label for="editDescription">Description</label>
+              <input id="editDescription" type="text" autocomplete="off">
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Phases</h2>
+          <div id="phaseEditors" class="phase-grid"></div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Increment rules</h2>
+          <div id="incrementEditors" class="phase-grid"></div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Preview</h2>
+          <div class="actions">
+            <button id="previewBtn" type="button">Preview Timeline</button>
+            <button id="startEditedPresetBtn" class="primary" type="button">Save & Start</button>
+          </div>
+          <div id="previewSummary" class="notice hidden" style="margin-top:10px;"></div>
+          <div id="previewList" class="preview-list hidden" style="margin-top:10px;"></div>
+        </div>
+      </section>
+
+      <section id="viewImport" class="hidden">
+        <div class="card">
+          <h2 class="section-title">JSON import/export</h2>
+          <p class="muted">Exports presets and layout settings only. Active timer state is never exported.</p>
+          <div class="actions">
+            <button id="exportJsonBtn" type="button">Export JSON</button>
+            <button id="copyJsonBtn" type="button">Copy JSON</button>
+            <button id="downloadJsonBtn" type="button">Download JSON</button>
+            <button id="chooseJsonFileBtn" type="button">Choose JSON File</button>
+            <button id="importJsonBtn" class="primary" type="button">Import JSON</button>
+          </div>
+          <input id="jsonFileInput" class="hidden" type="file" accept="application/json,.json">
+          <label for="jsonBox" style="margin-top:12px;">Paste JSON or choose a JSON file</label>
+          <textarea id="jsonBox" spellcheck="false"></textarea>
+          <div id="jsonMessage" class="notice hidden" style="margin-top:10px;"></div>
+        </div>
+      </section>
+
+      <section id="viewSettings" class="hidden">
+        <div class="card">
+          <h2 class="section-title">Settings</h2>
+          <div class="row cols-2">
+            <div>
+              <label for="themeSelect">Theme</label>
+              <select id="themeSelect">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+                <option value="contrast">High contrast</option>
+              </select>
+            </div>
+            <div>
+              <label for="layoutSelect">Layout</label>
+              <select id="layoutSelect">
+                <option value="textual-large">Textual large</option>
+                <option value="compact">Compact</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="section-title">Sound test</h2>
+          <div class="row cols-2">
+            <div>
+              <label for="soundTestSelect">Sound</label>
+              <select id="soundTestSelect"></select>
+            </div>
+            <div style="display:flex; align-items:end;">
+              <button id="testSoundBtn" class="primary" type="button">Test Sound</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <h2 class="section-title">Notes for iPhone</h2>
+          <p class="muted">To use as a home-screen app, open the HTML in Safari or host it once, then use Share → Add to Home Screen. iPhone audio requires a user tap before sounds can play.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modalBackdrop" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h2 id="modalTitle">Alert</h2>
+      <div id="modalBody" class="muted"></div>
+      <div id="modalActions" class="actions"></div>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================
+       EDIT YOUR DEFAULT PRESETS HERE
+       ========================================================= */
+    const DEFAULT_CONFIG = {
+      app: {
+        name: "Rep Timer",
+        version: "1.0.0",
+        theme: "dark",
+        layout: "textual-large"
+      },
+      presets: [
+        {
+          id: "basic-rep-timer",
+          name: "Basic Rep Timer",
+          description: "Simple fixed rep/rest timer.",
+          sets: 3,
+          repsPerSet: 8,
+          prepareScope: "set",
+          phases: {
+            prepare: { enabled: true, label: "Prepare", durationSeconds: 5, color: "#334155", textColor: "#ffffff", sound: "softBell", alertMode: "soundOnly", alertSeconds: 1 },
+            rep: { enabled: true, label: "Rep", durationSeconds: 30, color: "#166534", textColor: "#ffffff", sound: "sharpBell", alertMode: "soundOnly", alertSeconds: 1 },
+            afterRep: { enabled: true, label: "After Rep", durationSeconds: 3, color: "#92400e", textColor: "#ffffff", sound: "doubleBeep", alertMode: "soundOnly", alertSeconds: 1 },
+            rest: { enabled: true, label: "Rest", durationSeconds: 20, color: "#1e40af", textColor: "#ffffff", sound: "lowBeep", alertMode: "soundOnly", alertSeconds: 1 },
+            setRest: { enabled: true, label: "Set Rest", durationSeconds: 90, color: "#581c87", textColor: "#ffffff", sound: "longBell", alertMode: "auto", alertSeconds: 2 }
+          },
+          increments: {
+            rep: { mode: "fixed", direction: "increase", amount: 0, applyEvery: "rep", minSeconds: 1, maxSeconds: 3600, rounding: "nearestSecond" },
+            rest: { mode: "fixed", direction: "increase", amount: 0, applyEvery: "rep", minSeconds: 0, maxSeconds: 3600, rounding: "nearestSecond" },
+            setRest: { mode: "fixed", direction: "increase", amount: 0, applyEvery: "set", minSeconds: 0, maxSeconds: 7200, rounding: "nearestSecond" }
+          },
+          controls: { allowPauseResume: true, allowSkipCurrentPhase: true, allowSkipNextRep: true, allowSkipNextSet: true }
+        },
+        {
+          id: "progressive-ladder",
+          name: "Progressive Ladder",
+          description: "Rep time increases linearly; rest decreases proportionally.",
+          sets: 2,
+          repsPerSet: 6,
+          prepareScope: "workout",
+          phases: {
+            prepare: { enabled: true, label: "Prepare", durationSeconds: 8, color: "#334155", textColor: "#ffffff", sound: "softBell", alertMode: "auto", alertSeconds: 1 },
+            rep: { enabled: true, label: "Work", durationSeconds: 20, color: "#047857", textColor: "#ffffff", sound: "sharpBell", alertMode: "soundOnly", alertSeconds: 1 },
+            afterRep: { enabled: true, label: "Check", durationSeconds: 4, color: "#a16207", textColor: "#ffffff", sound: "doubleBeep", alertMode: "soundOnly", alertSeconds: 1 },
+            rest: { enabled: true, label: "Rest", durationSeconds: 30, color: "#1d4ed8", textColor: "#ffffff", sound: "lowBeep", alertMode: "soundOnly", alertSeconds: 1 },
+            setRest: { enabled: true, label: "Long Rest", durationSeconds: 120, color: "#6d28d9", textColor: "#ffffff", sound: "longBell", alertMode: "auto", alertSeconds: 2 }
+          },
+          increments: {
+            rep: { mode: "linear", direction: "increase", amount: 5, applyEvery: "rep", minSeconds: 10, maxSeconds: 90, rounding: "nearestSecond" },
+            rest: { mode: "proportional", direction: "decrease", amount: 5, applyEvery: "rep", minSeconds: 10, maxSeconds: 90, rounding: "nearestSecond" },
+            setRest: { mode: "linear", direction: "increase", amount: 20, applyEvery: "set", minSeconds: 60, maxSeconds: 240, rounding: "nearestSecond" }
+          },
+          controls: { allowPauseResume: true, allowSkipCurrentPhase: true, allowSkipNextRep: true, allowSkipNextSet: true }
+        },
+        {
+          id: "set-based-training",
+          name: "Set-Based Training",
+          description: "Multiple sets with acknowledgement before longer rests.",
+          sets: 4,
+          repsPerSet: 5,
+          prepareScope: "set",
+          phases: {
+            prepare: { enabled: true, label: "Prepare", durationSeconds: 10, color: "#334155", textColor: "#ffffff", sound: "softBell", alertMode: "auto", alertSeconds: 1 },
+            rep: { enabled: true, label: "Lift", durationSeconds: 12, color: "#14532d", textColor: "#ffffff", sound: "sharpBell", alertMode: "soundOnly", alertSeconds: 1 },
+            afterRep: { enabled: true, label: "Hold", durationSeconds: 2, color: "#92400e", textColor: "#ffffff", sound: "doubleBeep", alertMode: "soundOnly", alertSeconds: 1 },
+            rest: { enabled: true, label: "Short Rest", durationSeconds: 15, color: "#1e3a8a", textColor: "#ffffff", sound: "lowBeep", alertMode: "soundOnly", alertSeconds: 1 },
+            setRest: { enabled: true, label: "Set Rest", durationSeconds: 150, color: "#4c1d95", textColor: "#ffffff", sound: "warningTone", alertMode: "acknowledge", alertSeconds: null }
+          },
+          increments: {
+            rep: { mode: "fixed", direction: "increase", amount: 0, applyEvery: "rep", minSeconds: 1, maxSeconds: 3600, rounding: "nearestSecond" },
+            rest: { mode: "linear", direction: "increase", amount: 3, applyEvery: "set", minSeconds: 10, maxSeconds: 60, rounding: "nearestSecond" },
+            setRest: { mode: "proportional", direction: "increase", amount: 10, applyEvery: "set", minSeconds: 90, maxSeconds: 300, rounding: "nearestSecond" }
+          },
+          controls: { allowPauseResume: true, allowSkipCurrentPhase: true, allowSkipNextRep: true, allowSkipNextSet: true }
+        }
+      ]
+    };
+
+    /* =========================================================
+       Constants and state
+       ========================================================= */
+    const STORAGE_KEY = "repTimer.userConfig.v1";
+    const SELECTED_KEY = "repTimer.selectedPreset.v1";
+    const SOUND_NAMES = ["silent", "softBell", "sharpBell", "doubleBeep", "lowBeep", "longBell", "successChime", "warningTone"];
+    const PHASE_ORDER = ["prepare", "rep", "afterRep", "rest", "setRest"];
+    const PHASE_TITLES = { prepare: "Prepare", rep: "Rep", afterRep: "After Rep", rest: "Rest", setRest: "Set Rest" };
+
+    let userConfig = loadConfig();
+    let selectedPresetId = safeGetStorage(SELECTED_KEY) || (userConfig.presets[0] && userConfig.presets[0].id) || DEFAULT_CONFIG.presets[0].id;
+    let editingPreset = null;
+    let runtime = {
+      timeline: [],
+      index: -1,
+      remaining: 0,
+      running: false,
+      paused: false,
+      interval: null,
+      awaitingAck: false,
+      lastTick: null
+    };
+    let audioCtx = null;
+    let audioReady = false;
+
+    const $ = (id) => document.getElementById(id);
+
+    /* =========================================================
+       Storage and validation
+       ========================================================= */
+    function deepClone(obj) { return JSON.parse(JSON.stringify(obj)); }
+
+    function safeGetStorage(key) {
+      try {
+        if (!window.localStorage) return null;
+        return window.localStorage.getItem(key);
+      } catch (err) {
+        return null;
+      }
+    }
+
+    function safeSetStorage(key, value) {
+      try {
+        if (!window.localStorage) return false;
+        window.localStorage.setItem(key, value);
+        return true;
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function loadConfig() {
+      try {
+        const raw = safeGetStorage(STORAGE_KEY);
+        if (!raw) return deepClone(DEFAULT_CONFIG);
+        const parsed = JSON.parse(raw);
+        return validateConfig(parsed).config;
+      } catch (err) {
+        return deepClone(DEFAULT_CONFIG);
+      }
+    }
+
+    function saveConfig() {
+      const ok1 = safeSetStorage(STORAGE_KEY, JSON.stringify(userConfig));
+      const ok2 = safeSetStorage(SELECTED_KEY, selectedPresetId);
+      return ok1 && ok2;
+    }
+
+    function defaultPhase(key) {
+      const phase = DEFAULT_CONFIG.presets[0].phases[key];
+      return deepClone(phase);
+    }
+
+    function defaultIncrement(key) {
+      const inc = DEFAULT_CONFIG.presets[0].increments[key];
+      return deepClone(inc);
+    }
+
+    function sanitizePreset(input, index) {
+      const base = deepClone(DEFAULT_CONFIG.presets[0]);
+      const p = Object.assign(base, input || {});
+      p.id = String(p.id || slugify(p.name || "preset-" + (index + 1))).trim() || "preset-" + (index + 1);
+      p.name = String(p.name || "Preset " + (index + 1)).trim();
+      p.description = String(p.description || "");
+      p.sets = clampInt(p.sets, 1, 999, 1);
+      p.repsPerSet = clampInt(p.repsPerSet, 1, 999, 1);
+      if (!["workout", "set", "rep"].includes(p.prepareScope)) p.prepareScope = "workout";
+      p.phases = p.phases || {};
+      PHASE_ORDER.forEach(key => {
+        p.phases[key] = Object.assign(defaultPhase(key), p.phases[key] || {});
+        p.phases[key].enabled = Boolean(p.phases[key].enabled);
+        p.phases[key].label = String(p.phases[key].label || PHASE_TITLES[key]);
+        p.phases[key].durationSeconds = clampNumber(p.phases[key].durationSeconds, 0, 86400, 0);
+        p.phases[key].color = String(p.phases[key].color || defaultPhase(key).color);
+        p.phases[key].textColor = String(p.phases[key].textColor || "#ffffff");
+        if (!SOUND_NAMES.includes(p.phases[key].sound)) p.phases[key].sound = "silent";
+        if (!["auto", "acknowledge", "soundOnly", "none"].includes(p.phases[key].alertMode)) p.phases[key].alertMode = "soundOnly";
+        if (p.phases[key].alertSeconds === null || p.phases[key].alertSeconds === undefined) p.phases[key].alertSeconds = p.phases[key].alertMode === "acknowledge" ? null : 1;
+        else p.phases[key].alertSeconds = clampNumber(p.phases[key].alertSeconds, 0, 60, 1);
+      });
+      p.increments = p.increments || {};
+      ["rep", "rest", "setRest"].forEach(key => {
+        p.increments[key] = Object.assign(defaultIncrement(key), p.increments[key] || {});
+        if (!["fixed", "linear", "proportional"].includes(p.increments[key].mode)) p.increments[key].mode = "fixed";
+        if (!["increase", "decrease"].includes(p.increments[key].direction)) p.increments[key].direction = "increase";
+        p.increments[key].amount = clampNumber(p.increments[key].amount, 0, 100000, 0);
+        if (!["rep", "set"].includes(p.increments[key].applyEvery)) p.increments[key].applyEvery = key === "setRest" ? "set" : "rep";
+        p.increments[key].minSeconds = clampNumber(p.increments[key].minSeconds, 0, 86400, 0);
+        p.increments[key].maxSeconds = clampNumber(p.increments[key].maxSeconds, p.increments[key].minSeconds, 86400, 3600);
+        if (!["nearestSecond", "floor", "ceil"].includes(p.increments[key].rounding)) p.increments[key].rounding = "nearestSecond";
+      });
+      p.controls = Object.assign({ allowPauseResume: true, allowSkipCurrentPhase: true, allowSkipNextRep: true, allowSkipNextSet: true }, p.controls || {});
+      return p;
+    }
+
+    function validateConfig(input) {
+      if (!input || typeof input !== "object") throw new Error("Config must be an object.");
+      let cfg = deepClone(input);
+      cfg.app = Object.assign(deepClone(DEFAULT_CONFIG.app), cfg.app || {});
+      if (!["dark", "light", "contrast"].includes(cfg.app.theme)) cfg.app.theme = "dark";
+      if (!["textual-large", "compact"].includes(cfg.app.layout)) cfg.app.layout = "textual-large";
+      if (!Array.isArray(cfg.presets)) throw new Error("Config must contain a presets array.");
+      cfg.presets = cfg.presets.map(sanitizePreset);
+      if (!cfg.presets.length) throw new Error("Config must contain at least one preset.");
+      const used = new Set();
+      cfg.presets.forEach((p, i) => {
+        let id = slugify(p.id || p.name || "preset-" + (i + 1));
+        while (used.has(id)) id = id + "-" + (i + 1);
+        used.add(id);
+        p.id = id;
+      });
+      return { config: cfg };
+    }
+
+    function exportConfigObject() {
+      return {
+        app: userConfig.app,
+        presets: userConfig.presets
+      };
+    }
+
+    /* =========================================================
+       Timeline generation
+       ========================================================= */
+    function getSelectedPreset() {
+      return userConfig.presets.find(p => p.id === selectedPresetId) || userConfig.presets[0];
+    }
+
+    function calcDuration(base, inc, repNumber, setNumber, repsPerSet) {
+      if (!inc || inc.mode === "fixed") return Math.max(0, base);
+      const step = inc.applyEvery === "set" ? setNumber - 1 : ((setNumber - 1) * repsPerSet + repNumber - 1);
+      let val = base;
+      if (inc.mode === "linear") {
+        val = inc.direction === "increase" ? base + inc.amount * step : base - inc.amount * step;
+      } else if (inc.mode === "proportional") {
+        const factor = inc.direction === "increase" ? 1 + inc.amount / 100 : 1 - inc.amount / 100;
+        val = base * Math.pow(Math.max(0, factor), step);
+      }
+      val = Math.min(Math.max(val, inc.minSeconds), inc.maxSeconds);
+      if (inc.rounding === "floor") val = Math.floor(val);
+      else if (inc.rounding === "ceil") val = Math.ceil(val);
+      else val = Math.round(val);
+      return Math.max(0, val);
+    }
+
+    function makeItem(preset, type, setNumber, repNumber, durationOverride) {
+      const phase = preset.phases[type];
+      if (!phase || !phase.enabled) return null;
+      const duration = durationOverride !== undefined ? durationOverride : phase.durationSeconds;
+      if (duration <= 0) return null;
+      return {
+        type,
+        label: phase.label,
+        durationSeconds: duration,
+        setNumber,
+        totalSets: preset.sets,
+        repNumber,
+        totalReps: preset.repsPerSet,
+        color: phase.color,
+        textColor: phase.textColor,
+        sound: phase.sound,
+        alertMode: phase.alertMode,
+        alertSeconds: phase.alertSeconds
+      };
+    }
+
+    function buildTimeline(preset) {
+      const timeline = [];
+      for (let set = 1; set <= preset.sets; set++) {
+        if (preset.prepareScope === "set") pushIf(timeline, makeItem(preset, "prepare", set, 0));
+        if (preset.prepareScope === "workout" && set === 1) pushIf(timeline, makeItem(preset, "prepare", set, 0));
+        for (let rep = 1; rep <= preset.repsPerSet; rep++) {
+          if (preset.prepareScope === "rep") pushIf(timeline, makeItem(preset, "prepare", set, rep));
+          const repDur = calcDuration(preset.phases.rep.durationSeconds, preset.increments.rep, rep, set, preset.repsPerSet);
+          pushIf(timeline, makeItem(preset, "rep", set, rep, repDur));
+          pushIf(timeline, makeItem(preset, "afterRep", set, rep));
+          if (rep < preset.repsPerSet) {
+            const restDur = calcDuration(preset.phases.rest.durationSeconds, preset.increments.rest, rep, set, preset.repsPerSet);
+            pushIf(timeline, makeItem(preset, "rest", set, rep, restDur));
+          }
+        }
+        if (set < preset.sets) {
+          const setRestDur = calcDuration(preset.phases.setRest.durationSeconds, preset.increments.setRest, 1, set, preset.repsPerSet);
+          pushIf(timeline, makeItem(preset, "setRest", set, preset.repsPerSet, setRestDur));
+        }
+      }
+      timeline.push({ type: "complete", label: "Complete", durationSeconds: 0, setNumber: preset.sets, totalSets: preset.sets, repNumber: preset.repsPerSet, totalReps: preset.repsPerSet, color: "#16a34a", textColor: "#ffffff", sound: "successChime", alertMode: "auto", alertSeconds: 2 });
+      return timeline;
+    }
+
+    function pushIf(arr, item) { if (item) arr.push(item); }
+
+    /* =========================================================
+       Timer engine
+       ========================================================= */
+    function startPreset(preset) {
+      initAudio();
+      runtime.timeline = buildTimeline(preset);
+      runtime.index = -1;
+      runtime.remaining = 0;
+      runtime.running = true;
+      runtime.paused = false;
+      runtime.awaitingAck = false;
+      clearInterval(runtime.interval);
+      moveNext();
+    }
+
+    function moveNext() {
+      runtime.index += 1;
+      if (runtime.index >= runtime.timeline.length) {
+        finishTimer();
+        return;
+      }
+      const item = runtime.timeline[runtime.index];
+      if (item.type === "complete") {
+        renderTimerItem(item, 0);
+        playSound(item.sound);
+        finishTimer(false);
+        return;
+      }
+      runtime.remaining = item.durationSeconds;
+      runtime.lastTick = Date.now();
+      renderTimerItem(item, runtime.remaining);
+      playSound(item.sound);
+      handlePhaseAlert(item, () => beginTicking());
+    }
+
+    function beginTicking() {
+      if (!runtime.running || runtime.paused || runtime.awaitingAck) return;
+      clearInterval(runtime.interval);
+      runtime.lastTick = Date.now();
+      runtime.interval = setInterval(tick, 250);
+    }
+
+    function tick() {
+      if (!runtime.running || runtime.paused || runtime.awaitingAck) return;
+      const now = Date.now();
+      const elapsed = (now - runtime.lastTick) / 1000;
+      runtime.lastTick = now;
+      runtime.remaining -= elapsed;
+      if (runtime.remaining <= 0) {
+        runtime.remaining = 0;
+        renderCurrent();
+        clearInterval(runtime.interval);
+        moveNext();
+      } else {
+        renderCurrent();
+      }
+    }
+
+    function toggleStartPause() {
+      const preset = getSelectedPreset();
+      if (!runtime.running) {
+        startPreset(preset);
+        return;
+      }
+      if (runtime.awaitingAck) return;
+      runtime.paused = !runtime.paused;
+      if (runtime.paused) {
+        clearInterval(runtime.interval);
+      } else {
+        beginTicking();
+      }
+      renderCurrent();
+    }
+
+    function resetTimer() {
+      clearInterval(runtime.interval);
+      runtime = { timeline: [], index: -1, remaining: 0, running: false, paused: false, interval: null, awaitingAck: false, lastTick: null };
+      renderReady();
+    }
+
+    function finishTimer(clearRun = true) {
+      clearInterval(runtime.interval);
+      runtime.running = false;
+      runtime.paused = false;
+      runtime.awaitingAck = false;
+      $("startPauseBtn").textContent = "Start";
+      if (clearRun) renderReady();
+    }
+
+    function skipCurrentPhase() {
+      if (!runtime.running) return;
+      clearInterval(runtime.interval);
+      hideModal();
+      runtime.awaitingAck = false;
+      moveNext();
+    }
+
+    function skipNextRep() {
+      if (!runtime.running) return;
+      const current = runtime.timeline[runtime.index];
+      if (!current) return;
+      const targetSet = current.setNumber || 1;
+      const targetRep = Math.min((current.repNumber || 0) + 1, current.totalReps || 1);
+      const start = runtime.index + 1;
+      let removeFrom = -1, removeTo = -1;
+      for (let i = start; i < runtime.timeline.length; i++) {
+        const item = runtime.timeline[i];
+        if (item.type === "rep" && item.setNumber === targetSet && item.repNumber === targetRep) {
+          removeFrom = i;
+          removeTo = i;
+          for (let j = i + 1; j < runtime.timeline.length; j++) {
+            const n = runtime.timeline[j];
+            if (n.setNumber === targetSet && n.repNumber === targetRep && ["afterRep", "rest"].includes(n.type)) removeTo = j;
+            else break;
+          }
+          break;
+        }
+      }
+      if (removeFrom >= 0) {
+        runtime.timeline.splice(removeFrom, removeTo - removeFrom + 1);
+        renderCurrent();
+      } else {
+        skipCurrentPhase();
+      }
+    }
+
+    function skipNextSet() {
+      if (!runtime.running) return;
+      const current = runtime.timeline[runtime.index];
+      if (!current) return;
+      const setToSkip = current.setNumber || 1;
+      let i = runtime.index + 1;
+      while (i < runtime.timeline.length && runtime.timeline[i].setNumber === setToSkip && runtime.timeline[i].type !== "complete") {
+        runtime.timeline.splice(i, 1);
+      }
+      if ((runtime.timeline[runtime.index] && runtime.timeline[runtime.index].setNumber === setToSkip)) skipCurrentPhase();
+      else renderCurrent();
+    }
+
+    function handlePhaseAlert(item, done) {
+      if (item.alertMode === "none" || item.alertMode === "soundOnly") { done(); return; }
+      if (item.alertMode === "acknowledge") {
+        runtime.awaitingAck = true;
+        showModal(item.label, "Next: " + getNextLabel(), [{ text: "Continue", cls: "primary", action: () => { hideModal(); runtime.awaitingAck = false; done(); } }]);
+        return;
+      }
+      if (item.alertMode === "auto") {
+        showModal(item.label, "Next: " + getNextLabel(), []);
+        setTimeout(() => { if (!runtime.awaitingAck) hideModal(); done(); }, Math.max(0, Number(item.alertSeconds || 1)) * 1000);
+      }
+    }
+
+    /* =========================================================
+       Sound engine
+       ========================================================= */
+    function initAudio() {
+      if (audioReady) return;
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) throw new Error("Web Audio unavailable");
+        audioCtx = audioCtx || new Ctx();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        audioReady = true;
+        $("soundStatus").textContent = "Sound: Ready";
+      } catch (err) {
+        audioReady = false;
+        $("soundStatus").textContent = "Sound: unavailable";
+      }
+    }
+
+    function tone(freq, start, duration, gain = 0.09, type = "sine") {
+      if (!audioCtx || !audioReady) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
+      g.gain.setValueAtTime(0.0001, audioCtx.currentTime + start);
+      g.gain.exponentialRampToValueAtTime(gain, audioCtx.currentTime + start + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + start + duration);
+      osc.connect(g).connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime + start);
+      osc.stop(audioCtx.currentTime + start + duration + 0.02);
+    }
+
+    function playSound(name) {
+      if (!name || name === "silent") return;
+      if (!audioReady) return;
+      try {
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        if (name === "softBell") { tone(660, 0, .25, .06); tone(990, .05, .30, .045); }
+        else if (name === "sharpBell") { tone(880, 0, .14, .10, "triangle"); }
+        else if (name === "doubleBeep") { tone(740, 0, .10, .08); tone(740, .18, .10, .08); }
+        else if (name === "lowBeep") { tone(330, 0, .22, .09, "sine"); }
+        else if (name === "longBell") { tone(523, 0, .45, .08); tone(784, .08, .55, .06); }
+        else if (name === "successChime") { tone(523, 0, .14, .08); tone(659, .14, .14, .08); tone(784, .28, .30, .08); }
+        else if (name === "warningTone") { tone(220, 0, .18, .10, "square"); tone(220, .28, .18, .10, "square"); }
+      } catch (err) {
+        $("soundStatus").textContent = "Sound: blocked";
+      }
+    }
+
+    /* =========================================================
+       Rendering
+       ========================================================= */
+    function setTab(name) {
+      ["Timer", "Presets", "Import", "Settings"].forEach(t => {
+        $("view" + t).classList.toggle("hidden", t !== name);
+        $("tab" + t).classList.toggle("active", t === name);
+      });
+      if (name === "Presets") loadEditor(getSelectedPreset());
+    }
+
+    function renderAll() {
+      document.body.dataset.theme = userConfig.app.theme || "dark";
+      $("themeSelect").value = userConfig.app.theme || "dark";
+      $("themeSelectTop").value = userConfig.app.theme || "dark";
+      $("layoutSelect").value = userConfig.app.layout || "textual-large";
+      renderPresetSelect();
+      renderSoundOptions();
+      renderReady();
+      buildPhaseEditors();
+      buildIncrementEditors();
+    }
+
+    function renderPresetSelect() {
+      const sel = $("presetSelect");
+      sel.innerHTML = "";
+      userConfig.presets.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name;
+        sel.appendChild(opt);
+      });
+      if (!userConfig.presets.some(p => p.id === selectedPresetId)) selectedPresetId = userConfig.presets[0].id;
+      sel.value = selectedPresetId;
+      const p = getSelectedPreset();
+      $("presetDescription").textContent = p.description || "";
+      $("presetName").textContent = "Preset: " + p.name;
+    }
+
+    function renderReady() {
+      const p = getSelectedPreset();
+      document.documentElement.style.setProperty("--phase-bg", "#0f172a");
+      document.documentElement.style.setProperty("--phase-text", "#ffffff");
+      $("phaseLabel").textContent = "Ready";
+      $("countdown").textContent = "00:00";
+      $("repCounter").textContent = "Rep 0 / " + p.repsPerSet;
+      $("setCounter").textContent = "Set 0 / " + p.sets;
+      $("nextPhase").textContent = "Next: " + firstPhaseLabel(p);
+      $("presetName").textContent = "Preset: " + p.name;
+      $("startPauseBtn").textContent = "Start";
+    }
+
+    function renderCurrent() {
+      const item = runtime.timeline[runtime.index];
+      if (!item) { renderReady(); return; }
+      renderTimerItem(item, runtime.remaining);
+    }
+
+    function renderTimerItem(item, remaining) {
+      document.documentElement.style.setProperty("--phase-bg", item.color || "#166534");
+      document.documentElement.style.setProperty("--phase-text", item.textColor || "#ffffff");
+      $("phaseLabel").textContent = item.label || item.type;
+      $("countdown").textContent = formatTime(Math.ceil(remaining));
+      $("repCounter").textContent = "Rep " + (item.repNumber || 0) + " / " + (item.totalReps || 0);
+      $("setCounter").textContent = "Set " + (item.setNumber || 0) + " / " + (item.totalSets || 0);
+      $("nextPhase").textContent = "Next: " + getNextLabel();
+      $("presetName").textContent = "Preset: " + getSelectedPreset().name;
+      $("startPauseBtn").textContent = runtime.paused ? "Resume" : "Pause";
+    }
+
+    function getNextLabel() {
+      const next = runtime.timeline[runtime.index + 1];
+      return next ? next.label : "Complete";
+    }
+
+    function firstPhaseLabel(preset) {
+      const tl = buildTimeline(preset);
+      return (tl[0] && tl[0].label) || "Complete";
+    }
+
+    function formatTime(seconds) {
+      seconds = Math.max(0, Math.round(seconds || 0));
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      if (h > 0) return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+      return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    }
+
+    function buildPhaseEditors() {
+      const container = $("phaseEditors");
+      container.innerHTML = "";
+      PHASE_ORDER.forEach(key => {
+        const d = document.createElement("details");
+        d.open = key === "rep";
+        d.innerHTML = `
+          <summary>${PHASE_TITLES[key]}</summary>
+          <div class="phase-editor-body row cols-2">
+            <div class="checkbox-line"><input id="ph_${key}_enabled" type="checkbox"><label for="ph_${key}_enabled">Enabled</label></div>
+            <div><label for="ph_${key}_label">Label</label><input id="ph_${key}_label" type="text"></div>
+            <div><label for="ph_${key}_duration">Duration seconds</label><input id="ph_${key}_duration" type="number" min="0" step="1"></div>
+            <div><label for="ph_${key}_sound">Sound</label><select id="ph_${key}_sound"></select></div>
+            <div><label for="ph_${key}_color">Background color</label><input id="ph_${key}_color" type="color"></div>
+            <div><label for="ph_${key}_textColor">Text color</label><input id="ph_${key}_textColor" type="color"></div>
+            <div><label for="ph_${key}_alertMode">Alert mode</label><select id="ph_${key}_alertMode"><option value="auto">Auto</option><option value="acknowledge">Acknowledge</option><option value="soundOnly">Sound only</option><option value="none">None</option></select></div>
+            <div><label for="ph_${key}_alertSeconds">Alert seconds</label><input id="ph_${key}_alertSeconds" type="number" min="0" step="1"></div>
+          </div>`;
+        container.appendChild(d);
+        fillSoundSelect($("ph_" + key + "_sound"));
+      });
+    }
+
+    function buildIncrementEditors() {
+      const container = $("incrementEditors");
+      container.innerHTML = "";
+      ["rep", "rest", "setRest"].forEach(key => {
+        const d = document.createElement("details");
+        d.open = key === "rep";
+        d.innerHTML = `
+          <summary>${PHASE_TITLES[key]} increment</summary>
+          <div class="phase-editor-body row cols-3">
+            <div><label for="inc_${key}_mode">Mode</label><select id="inc_${key}_mode"><option value="fixed">Fixed</option><option value="linear">Linear</option><option value="proportional">Proportional</option></select></div>
+            <div><label for="inc_${key}_direction">Direction</label><select id="inc_${key}_direction"><option value="increase">Increase</option><option value="decrease">Decrease</option></select></div>
+            <div><label for="inc_${key}_amount">Amount</label><input id="inc_${key}_amount" type="number" min="0" step="0.1"></div>
+            <div><label for="inc_${key}_applyEvery">Apply every</label><select id="inc_${key}_applyEvery"><option value="rep">Rep</option><option value="set">Set</option></select></div>
+            <div><label for="inc_${key}_minSeconds">Min seconds</label><input id="inc_${key}_minSeconds" type="number" min="0" step="1"></div>
+            <div><label for="inc_${key}_maxSeconds">Max seconds</label><input id="inc_${key}_maxSeconds" type="number" min="0" step="1"></div>
+            <div><label for="inc_${key}_rounding">Rounding</label><select id="inc_${key}_rounding"><option value="nearestSecond">Nearest second</option><option value="floor">Floor</option><option value="ceil">Ceil</option></select></div>
+          </div>`;
+        container.appendChild(d);
+      });
+    }
+
+    function loadEditor(preset) {
+      editingPreset = deepClone(preset);
+      $("editName").value = editingPreset.name;
+      $("editId").value = editingPreset.id;
+      $("editDescription").value = editingPreset.description || "";
+      $("editSets").value = editingPreset.sets;
+      $("editReps").value = editingPreset.repsPerSet;
+      $("editPrepareScope").value = editingPreset.prepareScope;
+      PHASE_ORDER.forEach(key => {
+        const ph = editingPreset.phases[key];
+        $("ph_" + key + "_enabled").checked = ph.enabled;
+        $("ph_" + key + "_label").value = ph.label;
+        $("ph_" + key + "_duration").value = ph.durationSeconds;
+        $("ph_" + key + "_sound").value = ph.sound;
+        $("ph_" + key + "_color").value = normalizeColor(ph.color);
+        $("ph_" + key + "_textColor").value = normalizeColor(ph.textColor);
+        $("ph_" + key + "_alertMode").value = ph.alertMode;
+        $("ph_" + key + "_alertSeconds").value = (ph.alertSeconds === null || ph.alertSeconds === undefined ? "" : ph.alertSeconds);
+      });
+      ["rep", "rest", "setRest"].forEach(key => {
+        const inc = editingPreset.increments[key];
+        $("inc_" + key + "_mode").value = inc.mode;
+        $("inc_" + key + "_direction").value = inc.direction;
+        $("inc_" + key + "_amount").value = inc.amount;
+        $("inc_" + key + "_applyEvery").value = inc.applyEvery;
+        $("inc_" + key + "_minSeconds").value = inc.minSeconds;
+        $("inc_" + key + "_maxSeconds").value = inc.maxSeconds;
+        $("inc_" + key + "_rounding").value = inc.rounding;
+      });
+    }
+
+    function readEditor() {
+      const p = editingPreset || deepClone(DEFAULT_CONFIG.presets[0]);
+      p.name = $("editName").value.trim() || "Untitled Preset";
+      p.id = slugify($("editId").value.trim() || p.name);
+      p.description = $("editDescription").value.trim();
+      p.sets = clampInt($("editSets").value, 1, 999, 1);
+      p.repsPerSet = clampInt($("editReps").value, 1, 999, 1);
+      p.prepareScope = $("editPrepareScope").value;
+      PHASE_ORDER.forEach(key => {
+        p.phases[key] = {
+          enabled: $("ph_" + key + "_enabled").checked,
+          label: $("ph_" + key + "_label").value.trim() || PHASE_TITLES[key],
+          durationSeconds: clampNumber($("ph_" + key + "_duration").value, 0, 86400, 0),
+          color: $("ph_" + key + "_color").value,
+          textColor: $("ph_" + key + "_textColor").value,
+          sound: $("ph_" + key + "_sound").value,
+          alertMode: $("ph_" + key + "_alertMode").value,
+          alertSeconds: $("ph_" + key + "_alertSeconds").value === "" ? null : clampNumber($("ph_" + key + "_alertSeconds").value, 0, 60, 1)
+        };
+      });
+      ["rep", "rest", "setRest"].forEach(key => {
+        p.increments[key] = {
+          mode: $("inc_" + key + "_mode").value,
+          direction: $("inc_" + key + "_direction").value,
+          amount: clampNumber($("inc_" + key + "_amount").value, 0, 100000, 0),
+          applyEvery: $("inc_" + key + "_applyEvery").value,
+          minSeconds: clampNumber($("inc_" + key + "_minSeconds").value, 0, 86400, 0),
+          maxSeconds: clampNumber($("inc_" + key + "_maxSeconds").value, 0, 86400, 3600),
+          rounding: $("inc_" + key + "_rounding").value
+        };
+      });
+      return sanitizePreset(p, 0);
+    }
+
+    function saveEditedPreset() {
+      const p = readEditor();
+      const idx = userConfig.presets.findIndex(x => x.id === (editingPreset && editingPreset.id));
+      if (idx >= 0) userConfig.presets[idx] = p;
+      else userConfig.presets.push(p);
+      selectedPresetId = p.id;
+      userConfig = validateConfig(userConfig).config;
+      saveConfig();
+      renderPresetSelect();
+      loadEditor(getSelectedPreset());
+      renderReady();
+      flashPreview("Preset saved.");
+    }
+
+    function showPreview(preset = readEditor()) {
+      const tl = buildTimeline(preset);
+      const total = tl.reduce((sum, i) => sum + (i.durationSeconds || 0), 0);
+      const repDurations = tl.filter(i => i.type === "rep").map(i => i.durationSeconds);
+      const restDurations = tl.filter(i => i.type === "rest").map(i => i.durationSeconds);
+      const setRestDurations = tl.filter(i => i.type === "setRest").map(i => i.durationSeconds);
+      const summary = `Total: <strong>${formatTime(total)}</strong> · Sets: <strong>${preset.sets}</strong> · Reps: <strong>${preset.repsPerSet}</strong><br>
+        Rep durations: ${summarizeDurations(repDurations)}<br>
+        Rest durations: ${summarizeDurations(restDurations)}<br>
+        Set rest durations: ${summarizeDurations(setRestDurations)}`;
+      $("previewSummary").innerHTML = summary;
+      $("previewSummary").classList.remove("hidden");
+      const list = $("previewList");
+      list.innerHTML = "";
+      const max = Math.min(tl.length, 120);
+      for (let i = 0; i < max; i++) {
+        const item = tl[i];
+        const div = document.createElement("div");
+        div.className = "preview-item";
+        div.innerHTML = `<span class="pill">${i + 1}</span><span>${escapeHtml(item.label)} <span class="muted">S${item.setNumber || "-"} R${item.repNumber || "-"}</span></span><strong>${formatTime(item.durationSeconds || 0)}</strong>`;
+        list.appendChild(div);
+      }
+      if (tl.length > max) {
+        const div = document.createElement("div");
+        div.className = "preview-item";
+        div.innerHTML = `<span class="pill">…</span><span>${tl.length - max} more items</span><strong></strong>`;
+        list.appendChild(div);
+      }
+      list.classList.remove("hidden");
+    }
+
+    function summarizeDurations(arr) {
+      if (!arr.length) return "none";
+      const unique = [...new Set(arr)].slice(0, 8);
+      const text = unique.map(v => formatTime(v)).join(", ");
+      return text + (new Set(arr).size > 8 ? ", …" : "");
+    }
+
+    /* =========================================================
+       Import/export and modals
+       ========================================================= */
+    function exportJson() {
+      const text = JSON.stringify(exportConfigObject(), null, 2);
+      $("jsonBox").value = text;
+      showMessage("jsonMessage", "JSON exported. It contains presets and layout settings only.");
+    }
+
+    async function copyJson() {
+      if (!$("jsonBox").value.trim()) exportJson();
+      try {
+        await navigator.clipboard.writeText($("jsonBox").value);
+        showMessage("jsonMessage", "JSON copied.");
+      } catch (err) {
+        showMessage("jsonMessage", "Clipboard failed. Select and copy manually.", true);
+      }
+    }
+
+    function downloadJson() {
+      if (!$("jsonBox").value.trim()) exportJson();
+      const blob = new Blob([$("jsonBox").value], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "rep-timer-presets.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showMessage("jsonMessage", "JSON download triggered.");
+    }
+
+    function importJson() {
+      try {
+        const raw = $("jsonBox").value.trim();
+        if (!raw) throw new Error("Paste JSON first or choose a JSON file.");
+        const parsed = JSON.parse(raw);
+        const validated = validateConfig(parsed).config;
+        userConfig = validated;
+        selectedPresetId = userConfig.presets[0].id;
+        saveConfig();
+        renderAll();
+        setTab("Timer");
+        showMessage("jsonMessage", "JSON imported.");
+      } catch (err) {
+        showMessage("jsonMessage", "Import failed: " + err.message, true);
+      }
+    }
+
+    function importJsonFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function () {
+        $("jsonBox").value = String(reader.result || "");
+        importJson();
+      };
+      reader.onerror = function () {
+        showMessage("jsonMessage", "Could not read the selected file.", true);
+      };
+      reader.readAsText(file);
+    }
+
+    function showModal(title, body, actions) {
+      $("modalTitle").textContent = title;
+      $("modalBody").textContent = body;
+      const act = $("modalActions");
+      act.innerHTML = "";
+      if (!actions.length) {
+        const b = document.createElement("button");
+        b.textContent = "Dismiss";
+        b.type = "button";
+        b.onclick = hideModal;
+        act.appendChild(b);
+      } else {
+        actions.forEach(a => {
+          const b = document.createElement("button");
+          b.textContent = a.text;
+          b.type = "button";
+          if (a.cls) b.className = a.cls;
+          b.onclick = a.action;
+          act.appendChild(b);
+        });
+      }
+      $("modalBackdrop").classList.remove("hidden");
+    }
+
+    function hideModal() { $("modalBackdrop").classList.add("hidden"); }
+
+    /* =========================================================
+       Utilities and events
+       ========================================================= */
+    function fillSoundSelect(sel) {
+      sel.innerHTML = "";
+      SOUND_NAMES.forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        sel.appendChild(opt);
+      });
+    }
+
+    function renderSoundOptions() { fillSoundSelect($("soundTestSelect")); }
+    function slugify(s) { return String(s).toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "preset"; }
+    function clampNumber(v, min, max, fallback) { v = Number(v); if (!Number.isFinite(v)) v = fallback; return Math.min(Math.max(v, min), max); }
+    function clampInt(v, min, max, fallback) { return Math.round(clampNumber(v, min, max, fallback)); }
+    function normalizeColor(c) { return /^#[0-9a-f]{6}$/i.test(String(c)) ? c : "#334155"; }
+    function escapeHtml(s) { return String(s).replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[ch])); }
+    function showMessage(id, msg, isError = false) { const el = $(id); el.textContent = msg; el.className = "notice " + (isError ? "error" : "success"); el.classList.remove("hidden"); }
+    function flashPreview(msg) { $("previewSummary").textContent = msg; $("previewSummary").className = "notice success"; }
+
+    function wireEvents() {
+      $("tabTimer").onclick = () => setTab("Timer");
+      $("tabPresets").onclick = () => setTab("Presets");
+      $("tabImport").onclick = () => setTab("Import");
+      $("tabSettings").onclick = () => setTab("Settings");
+      $("presetSelect").onchange = e => { selectedPresetId = e.target.value; saveConfig(); resetTimer(); renderPresetSelect(); };
+      $("themeSelect").onchange = e => { userConfig.app.theme = e.target.value; saveConfig(); renderAll(); };
+      $("themeSelectTop").onchange = e => { userConfig.app.theme = e.target.value; saveConfig(); renderAll(); };
+      $("layoutSelect").onchange = e => { userConfig.app.layout = e.target.value; saveConfig(); };
+      $("startPauseBtn").onclick = toggleStartPause;
+      $("skipPhaseBtn").onclick = skipCurrentPhase;
+      $("skipRepBtn").onclick = skipNextRep;
+      $("skipSetBtn").onclick = skipNextSet;
+      $("resetBtn").onclick = resetTimer;
+      $("previewFromTimerBtn").onclick = () => { setTab("Presets"); loadEditor(getSelectedPreset()); showPreview(getSelectedPreset()); };
+      $("newPresetBtn").onclick = () => { editingPreset = sanitizePreset({ id: "new-preset", name: "New Preset" }, 0); loadEditor(editingPreset); };
+      $("duplicatePresetBtn").onclick = () => { const p = deepClone(getSelectedPreset()); p.id = slugify(p.id + " copy"); p.name += " Copy"; editingPreset = p; loadEditor(p); };
+      $("savePresetBtn").onclick = saveEditedPreset;
+      $("deletePresetBtn").onclick = () => {
+        const p = getSelectedPreset();
+        if (userConfig.presets.length <= 1) { flashPreview("Cannot delete the only preset."); return; }
+        showModal("Delete preset?", "Delete " + p.name + "?", [
+          { text: "Cancel", action: hideModal },
+          { text: "Delete", cls: "danger", action: () => { userConfig.presets = userConfig.presets.filter(x => x.id !== p.id); selectedPresetId = userConfig.presets[0].id; saveConfig(); hideModal(); renderAll(); setTab("Presets"); } }
+        ]);
+      };
+      $("resetDefaultsBtn").onclick = () => showModal("Reset defaults?", "This replaces all saved presets with the built-in defaults.", [
+        { text: "Cancel", action: hideModal },
+        { text: "Reset", cls: "warning", action: () => { userConfig = deepClone(DEFAULT_CONFIG); selectedPresetId = userConfig.presets[0].id; saveConfig(); hideModal(); renderAll(); } }
+      ]);
+      $("previewBtn").onclick = () => showPreview(readEditor());
+      $("startEditedPresetBtn").onclick = () => { saveEditedPreset(); setTab("Timer"); startPreset(getSelectedPreset()); };
+      $("exportJsonBtn").onclick = exportJson;
+      $("copyJsonBtn").onclick = copyJson;
+      $("downloadJsonBtn").onclick = downloadJson;
+      $("chooseJsonFileBtn").onclick = () => $("jsonFileInput").click();
+      $("jsonFileInput").onchange = e => importJsonFile(e.target.files && e.target.files[0]);
+      $("importJsonBtn").onclick = importJson;
+      $("testSoundBtn").onclick = () => { initAudio(); playSound($("soundTestSelect").value); };
+      $("installHelpBtn").onclick = () => showModal("Add to Home Screen", "On iPhone: open this file in Safari, tap Share, then Add to Home Screen. For best PWA behavior, host the same HTML once and add it from Safari.", [{ text: "OK", cls: "primary", action: hideModal }]);
+      document.addEventListener("visibilitychange", () => { if (document.hidden && runtime.running && !runtime.paused) toggleStartPause(); });
+    }
+
+    wireEvents();
+    renderAll();
+  </script>
+</body>
+</html>
