@@ -122,7 +122,9 @@
     }
     .title { margin: 0; font-size: 22px; letter-spacing: -.02em; }
     .subtitle { color: var(--muted); font-size: 13px; margin-top: 3px; }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
     .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 14px; }
+    .tabs.collapsed { display: none; }
     .tabs button { min-height: 40px; font-size: 13px; padding: 8px; }
     .tabs button.active { background: var(--accent); color: #001018; border-color: transparent; }
 
@@ -191,9 +193,16 @@
     .counter-box .num { font-size: clamp(22px, 7vw, 40px); font-weight: 950; font-variant-numeric: tabular-nums; }
     .counter-box .cap { font-size: 12px; opacity: .85; font-weight: 750; text-transform: uppercase; letter-spacing: .05em; }
     .timer-meta { font-weight: 750; opacity: .92; margin: 4px 0; }
-    .timer-controls { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-top: 12px; }
+    .timer-controls { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px; width: min(100%, 560px); align-self: center; }
     .timer-controls button { background: rgba(0,0,0,.23); color: inherit; border-color: rgba(255,255,255,.34); }
-    .timer-controls button.primary { background: rgba(255,255,255,.86); color: #000; }
+    .timer-controls button.primary { background: rgba(255,255,255,.86); color: #000; min-height: 58px; font-size: 20px; }
+    .secondary-controls { display: none; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-top: 8px; }
+    .secondary-controls.open { display: grid; }
+    .secondary-controls button { font-size: 14px; }
+    .timeline-context { display: grid; gap: 6px; }
+    .timeline-row { display: grid; grid-template-columns: 34px 1fr 72px; gap: 8px; align-items: center; padding: 8px 9px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-2); font-size: 13px; }
+    .timeline-row.current { outline: 3px solid var(--accent); background: rgba(56,189,248,.14); }
+    .timeline-row .marker { font-weight: 950; text-align: center; }
 
     .section-title { margin: 0 0 10px; font-size: 17px; }
     .phase-grid { display: grid; gap: 10px; }
@@ -237,7 +246,7 @@
       .app { padding: 10px; }
       .tabs { grid-template-columns: repeat(2, 1fr); }
       .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr; }
-      .timer-controls { grid-template-columns: 1fr 1fr; }
+      .secondary-controls { grid-template-columns: 1fr; }
       .preview-item { grid-template-columns: 70px 1fr 54px; font-size: 13px; }
     }
 
@@ -254,10 +263,13 @@
         <h1 class="title">Rep Timer</h1>
         <div class="subtitle">Offline rep/set interval timer</div>
       </div>
-      <button id="installHelpBtn" class="small ghost" type="button">Home Screen</button>
+      <div class="header-actions">
+        <button id="menuToggleBtn" class="small ghost" type="button" aria-expanded="false">☰ Menu</button>
+        <button id="installHelpBtn" class="small ghost" type="button">Home Screen</button>
+      </div>
     </header>
 
-    <nav class="tabs" aria-label="Main sections">
+    <nav id="mainTabs" class="tabs collapsed" aria-label="Main sections">
       <button id="tabTimer" class="active" type="button">Timer</button>
       <button id="tabPresets" type="button">Presets</button>
       <button id="tabImport" type="button">JSON</button>
@@ -284,11 +296,13 @@
           <div class="timer-meta" id="presetName">Preset: —</div>
           <div class="timer-controls">
             <button id="startPauseBtn" class="primary" type="button">Start</button>
-            <button id="skipPhaseBtn" type="button">Skip Phase</button>
-            <button id="skipRepBtn" type="button">Skip Rep</button>
-            <button id="skipSetBtn" type="button">Skip Set</button>
-            <button id="resetBtn" class="danger" type="button">Reset</button>
-            <button id="previewFromTimerBtn" type="button">Preview</button>
+            <button id="moreControlsBtn" type="button" aria-expanded="false">More controls</button>
+            <div id="secondaryControls" class="secondary-controls">
+              <button id="skipPhaseBtn" type="button">Skip Phase</button>
+              <button id="skipRepBtn" type="button">Skip Rep</button>
+              <button id="skipSetBtn" type="button">Skip Set</button>
+              <button id="resetBtn" class="danger" type="button">Reset</button>
+            </div>
           </div>
         </div>
 
@@ -309,6 +323,12 @@
             </div>
           </div>
           <p class="muted" id="presetDescription"></p>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Timeline</h2>
+          <p class="muted">Showing the previous 5 steps, current step, and next 5 steps.</p>
+          <div id="timerTimeline" class="timeline-context"></div>
         </div>
       </section>
 
@@ -370,7 +390,6 @@
         <div class="card">
           <h2 class="section-title">Preview</h2>
           <div class="actions">
-            <button id="previewBtn" type="button">Preview Timeline</button>
             <button id="startEditedPresetBtn" class="primary" type="button">Save & Start</button>
           </div>
           <div id="previewSummary" class="notice hidden" style="margin-top:10px;"></div>
@@ -380,19 +399,26 @@
 
       <section id="viewImport" class="hidden">
         <div class="card">
-          <h2 class="section-title">JSON import/export</h2>
-          <p class="muted">Exports presets and layout settings only. Active timer state is never exported.</p>
+          <h2 class="section-title">JSON files</h2>
+          <p class="muted">Import and export preset files from this device. Exports include presets and layout settings only, not the active timer session.</p>
           <div class="actions">
-            <button id="exportJsonBtn" type="button">Export JSON</button>
-            <button id="copyJsonBtn" type="button">Copy JSON</button>
-            <button id="downloadJsonBtn" type="button">Download JSON</button>
-            <button id="chooseJsonFileBtn" type="button">Choose JSON File</button>
-            <button id="importJsonBtn" class="primary" type="button">Import JSON</button>
+            <button id="chooseJsonFileBtn" class="primary" type="button">Import JSON from device</button>
+            <button id="downloadJsonBtn" type="button">Export JSON to device</button>
           </div>
           <input id="jsonFileInput" class="hidden" type="file" accept="application/json,.json">
-          <label for="jsonBox" style="margin-top:12px;">Paste JSON or choose a JSON file</label>
-          <textarea id="jsonBox" spellcheck="false"></textarea>
           <div id="jsonMessage" class="notice hidden" style="margin-top:10px;"></div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Copy / paste JSON code</h2>
+          <p class="muted">Use this only when you want to manually copy a preset backup or paste JSON text from another device.</p>
+          <div class="actions">
+            <button id="exportJsonBtn" type="button">Show current JSON</button>
+            <button id="copyJsonBtn" type="button">Copy shown JSON</button>
+            <button id="importJsonBtn" class="primary" type="button">Load pasted JSON</button>
+          </div>
+          <label for="jsonBox" style="margin-top:12px;">JSON code</label>
+          <textarea id="jsonBox" spellcheck="false" placeholder="Paste JSON here, or press Show current JSON."></textarea>
         </div>
       </section>
 
@@ -547,6 +573,7 @@
     };
     let audioCtx = null;
     let audioReady = false;
+    let audioUnlocking = null;
 
     const $ = (id) => document.getElementById(id);
 
@@ -739,7 +766,7 @@
        Timer engine
        ========================================================= */
     function startPreset(preset) {
-      initAudio();
+      initAudio(true);
       runtime.timeline = buildTimeline(preset);
       runtime.index = -1;
       runtime.remaining = 0;
@@ -766,6 +793,7 @@
       runtime.remaining = item.durationSeconds;
       runtime.lastTick = Date.now();
       renderTimerItem(item, runtime.remaining);
+      renderTimelineContext();
       playSound(item.sound);
       handlePhaseAlert(item, () => beginTicking());
     }
@@ -822,6 +850,7 @@
       runtime.awaitingAck = false;
       $("startPauseBtn").textContent = "Start";
       if (clearRun) renderReady();
+      renderTimelineContext();
     }
 
     function skipCurrentPhase() {
@@ -890,47 +919,81 @@
     /* =========================================================
        Sound engine
        ========================================================= */
-    function initAudio() {
-      if (audioReady) return;
+    function initAudio(forceUnlock) {
+      if (audioReady && audioCtx && audioCtx.state === "running") return Promise.resolve(true);
+      if (audioUnlocking) return audioUnlocking;
       try {
         const Ctx = window.AudioContext || window.webkitAudioContext;
         if (!Ctx) throw new Error("Web Audio unavailable");
         audioCtx = audioCtx || new Ctx();
-        if (audioCtx.state === "suspended") audioCtx.resume();
-        audioReady = true;
-        $("soundStatus").textContent = "Sound: Ready";
+        const resumePromise = audioCtx.state === "suspended" ? audioCtx.resume() : Promise.resolve();
+        audioUnlocking = resumePromise.then(function () {
+          if (forceUnlock) {
+            const g = audioCtx.createGain();
+            g.gain.value = 0.00001;
+            const o = audioCtx.createOscillator();
+            o.frequency.value = 440;
+            o.connect(g).connect(audioCtx.destination);
+            o.start();
+            o.stop(audioCtx.currentTime + 0.03);
+          }
+          audioReady = audioCtx.state === "running" || audioCtx.state === "interrupted";
+          $("soundStatus").textContent = audioReady ? "Sound: Ready" : "Sound: tap Start to enable";
+          audioUnlocking = null;
+          return audioReady;
+        }).catch(function () {
+          audioReady = false;
+          audioUnlocking = null;
+          $("soundStatus").textContent = "Sound: blocked by iPhone";
+          return false;
+        });
+        return audioUnlocking;
       } catch (err) {
         audioReady = false;
         $("soundStatus").textContent = "Sound: unavailable";
+        return Promise.resolve(false);
       }
     }
 
-    function tone(freq, start, duration, gain = 0.09, type = "sine") {
-      if (!audioCtx || !audioReady) return;
+    function tone(freq, start, duration, gain, type) {
+      if (!audioCtx) return;
+      gain = gain === undefined ? 0.09 : gain;
+      type = type || "sine";
       const osc = audioCtx.createOscillator();
       const g = audioCtx.createGain();
+      const t0 = audioCtx.currentTime + start;
       osc.type = type;
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime + start);
-      g.gain.setValueAtTime(0.0001, audioCtx.currentTime + start);
-      g.gain.exponentialRampToValueAtTime(gain, audioCtx.currentTime + start + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + start + duration);
+      osc.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(gain, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
       osc.connect(g).connect(audioCtx.destination);
-      osc.start(audioCtx.currentTime + start);
-      osc.stop(audioCtx.currentTime + start + duration + 0.02);
+      osc.start(t0);
+      osc.stop(t0 + duration + 0.03);
+    }
+
+    function scheduleSound(name) {
+      if (!name || name === "silent" || !audioCtx) return;
+      if (name === "softBell") { tone(660, 0, .28, .10); tone(990, .05, .34, .075); }
+      else if (name === "sharpBell") { tone(880, 0, .18, .14, "triangle"); tone(1320, .03, .12, .06, "sine"); }
+      else if (name === "doubleBeep") { tone(740, 0, .12, .12); tone(740, .20, .12, .12); }
+      else if (name === "lowBeep") { tone(330, 0, .26, .13, "sine"); }
+      else if (name === "longBell") { tone(523, 0, .50, .11); tone(784, .08, .62, .08); }
+      else if (name === "successChime") { tone(523, 0, .16, .10); tone(659, .16, .16, .10); tone(784, .32, .34, .11); }
+      else if (name === "warningTone") { tone(220, 0, .22, .13, "square"); tone(220, .32, .22, .13, "square"); }
     }
 
     function playSound(name) {
       if (!name || name === "silent") return;
-      if (!audioReady) return;
       try {
-        if (audioCtx.state === "suspended") audioCtx.resume();
-        if (name === "softBell") { tone(660, 0, .25, .06); tone(990, .05, .30, .045); }
-        else if (name === "sharpBell") { tone(880, 0, .14, .10, "triangle"); }
-        else if (name === "doubleBeep") { tone(740, 0, .10, .08); tone(740, .18, .10, .08); }
-        else if (name === "lowBeep") { tone(330, 0, .22, .09, "sine"); }
-        else if (name === "longBell") { tone(523, 0, .45, .08); tone(784, .08, .55, .06); }
-        else if (name === "successChime") { tone(523, 0, .14, .08); tone(659, .14, .14, .08); tone(784, .28, .30, .08); }
-        else if (name === "warningTone") { tone(220, 0, .18, .10, "square"); tone(220, .28, .18, .10, "square"); }
+        initAudio(false).then(function (ok) {
+          if (!ok || !audioCtx) return;
+          if (audioCtx.state === "suspended") {
+            audioCtx.resume().then(function () { scheduleSound(name); });
+          } else {
+            scheduleSound(name);
+          }
+        });
       } catch (err) {
         $("soundStatus").textContent = "Sound: blocked";
       }
@@ -945,6 +1008,8 @@
         $("tab" + t).classList.toggle("active", t === name);
       });
       if (name === "Presets") loadEditor(getSelectedPreset());
+      const tabs = $("mainTabs");
+      if (tabs) { tabs.classList.add("collapsed"); $("menuToggleBtn").setAttribute("aria-expanded", "false"); }
     }
 
     function renderAll() {
@@ -955,6 +1020,7 @@
       renderPresetSelect();
       renderSoundOptions();
       renderReady();
+      renderTimelineContext();
       buildPhaseEditors();
       buildIncrementEditors();
     }
@@ -990,8 +1056,9 @@
 
     function renderCurrent() {
       const item = runtime.timeline[runtime.index];
-      if (!item) { renderReady(); return; }
+      if (!item) { renderReady(); renderTimelineContext(); return; }
       renderTimerItem(item, runtime.remaining);
+      renderTimelineContext();
     }
 
     function renderTimerItem(item, remaining) {
@@ -1004,6 +1071,27 @@
       $("nextPhase").textContent = "Next: " + getNextLabel();
       $("presetName").textContent = "Preset: " + getSelectedPreset().name;
       $("startPauseBtn").textContent = runtime.paused ? "Resume" : "Pause";
+    }
+
+    function renderTimelineContext() {
+      const el = $("timerTimeline");
+      if (!el) return;
+      let tl = runtime.timeline && runtime.timeline.length ? runtime.timeline : buildTimeline(getSelectedPreset());
+      let idx = runtime.index >= 0 ? runtime.index : 0;
+      if (idx >= tl.length) idx = Math.max(0, tl.length - 1);
+      const start = Math.max(0, idx - 5);
+      const end = Math.min(tl.length - 1, idx + 5);
+      el.innerHTML = "";
+      for (let i = start; i <= end; i++) {
+        const item = tl[i];
+        const row = document.createElement("div");
+        row.className = "timeline-row" + (i === idx ? " current" : "");
+        const marker = i === idx ? "➜" : String(i + 1);
+        const rep = item.repNumber ? " · R" + item.repNumber + "/" + item.totalReps : "";
+        const set = item.setNumber ? "S" + item.setNumber + "/" + item.totalSets : "";
+        row.innerHTML = '<div class="marker">' + marker + '</div><div><strong>' + escapeHtml(item.label || item.type) + '</strong><div class="muted">' + escapeHtml(set + rep) + (i === idx ? ' · you are here' : '') + '</div></div><div class="mono">' + formatTime(item.durationSeconds || 0) + '</div>';
+        el.appendChild(row);
+      }
     }
 
     function getNextLabel() {
@@ -1297,21 +1385,30 @@
     function showMessage(id, msg, isError = false) { const el = $(id); el.textContent = msg; el.className = "notice " + (isError ? "error" : "success"); el.classList.remove("hidden"); }
     function flashPreview(msg) { $("previewSummary").textContent = msg; $("previewSummary").className = "notice success"; }
 
+    function confirmDangerousAction(title, body, action) {
+      if (!runtime.running && title.indexOf("Reset") === -1) return;
+      showModal(title, body, [
+        { text: "Cancel", action: hideModal },
+        { text: "Confirm", cls: "warning", action: function () { hideModal(); action(); } }
+      ]);
+    }
+
     function wireEvents() {
       $("tabTimer").onclick = () => setTab("Timer");
       $("tabPresets").onclick = () => setTab("Presets");
       $("tabImport").onclick = () => setTab("Import");
       $("tabSettings").onclick = () => setTab("Settings");
+      $("menuToggleBtn").onclick = () => { const tabs = $("mainTabs"); const collapsed = tabs.classList.toggle("collapsed"); $("menuToggleBtn").setAttribute("aria-expanded", String(!collapsed)); };
       $("presetSelect").onchange = e => { selectedPresetId = e.target.value; saveConfig(); resetTimer(); renderPresetSelect(); };
       $("themeSelect").onchange = e => { userConfig.app.theme = e.target.value; saveConfig(); renderAll(); };
       $("themeSelectTop").onchange = e => { userConfig.app.theme = e.target.value; saveConfig(); renderAll(); };
       $("layoutSelect").onchange = e => { userConfig.app.layout = e.target.value; saveConfig(); };
       $("startPauseBtn").onclick = toggleStartPause;
-      $("skipPhaseBtn").onclick = skipCurrentPhase;
-      $("skipRepBtn").onclick = skipNextRep;
-      $("skipSetBtn").onclick = skipNextSet;
-      $("resetBtn").onclick = resetTimer;
-      $("previewFromTimerBtn").onclick = () => { setTab("Presets"); loadEditor(getSelectedPreset()); showPreview(getSelectedPreset()); };
+      $("moreControlsBtn").onclick = () => { const box = $("secondaryControls"); const open = box.classList.toggle("open"); $("moreControlsBtn").textContent = open ? "Hide controls" : "More controls"; $("moreControlsBtn").setAttribute("aria-expanded", String(open)); };
+      $("skipPhaseBtn").onclick = () => confirmDangerousAction("Skip current phase?", "This immediately moves to the next timer phase.", skipCurrentPhase);
+      $("skipRepBtn").onclick = () => confirmDangerousAction("Skip next rep?", "This removes the next rep and its related after/rest steps from this session.", skipNextRep);
+      $("skipSetBtn").onclick = () => confirmDangerousAction("Skip next set?", "This skips the remaining work in the current set and moves forward.", skipNextSet);
+      $("resetBtn").onclick = () => confirmDangerousAction("Reset timer?", "This stops the current session and returns to Ready.", resetTimer);
       $("newPresetBtn").onclick = () => { editingPreset = sanitizePreset({ id: "new-preset", name: "New Preset" }, 0); loadEditor(editingPreset); };
       $("duplicatePresetBtn").onclick = () => { const p = deepClone(getSelectedPreset()); p.id = slugify(p.id + " copy"); p.name += " Copy"; editingPreset = p; loadEditor(p); };
       $("savePresetBtn").onclick = saveEditedPreset;
@@ -1327,7 +1424,6 @@
         { text: "Cancel", action: hideModal },
         { text: "Reset", cls: "warning", action: () => { userConfig = deepClone(DEFAULT_CONFIG); selectedPresetId = userConfig.presets[0].id; saveConfig(); hideModal(); renderAll(); } }
       ]);
-      $("previewBtn").onclick = () => showPreview(readEditor());
       $("startEditedPresetBtn").onclick = () => { saveEditedPreset(); setTab("Timer"); startPreset(getSelectedPreset()); };
       $("exportJsonBtn").onclick = exportJson;
       $("copyJsonBtn").onclick = copyJson;
