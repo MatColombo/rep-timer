@@ -10,130 +10,186 @@
   <meta name="theme-color" content="#0f172a">
   <title>Rep Timer</title>
   <style>
+    /* =========================================================
+       Design tokens — "Ember" theme
+       A graphite-and-chalk gym console with a molten ember accent.
+       Phase colors (work/rest/etc.) stay data-driven per preset;
+       everything else in this stylesheet is the app's own chrome.
+       ========================================================= */
     :root {
-      --bg: #0f172a;
-      --panel: #111827;
-      --panel-2: #1f2937;
-      --text: #f8fafc;
-      --muted: #cbd5e1;
-      --border: rgba(255,255,255,.16);
-      --accent: #38bdf8;
-      --danger: #ef4444;
-      --ok: #22c55e;
-      --warning: #f59e0b;
-      --shadow: rgba(0,0,0,.25);
-      --phase-bg: #166534;
+      --bg: #131319;
+      --bg-soft: #1a1a22;
+      --panel: #1c1d26;
+      --panel-2: #23242e;
+      --panel-3: #2b2d38;
+      --text: #f3f1ea;
+      --muted: #93939f;
+      --muted-strong: #b5b5c1;
+      --border: rgba(255,255,255,.08);
+      --border-strong: rgba(255,255,255,.16);
+      --accent: #ff6a3d;
+      --accent-ink: #1c0800;
+      --accent-soft: rgba(255,106,61,.14);
+      --danger: #ff5470;
+      --ok: #34d399;
+      --warning: #f2b84b;
+      --shadow: rgba(0,0,0,.45);
+      --phase-bg: #1f6d4c;
       --phase-text: #ffffff;
-      --radius: 18px;
-      --button-bg: rgba(255,255,255,.12);
-      --button-text: #ffffff;
-      --input-bg: rgba(255,255,255,.08);
+      --radius-lg: 24px;
+      --radius: 16px;
+      --radius-sm: 11px;
+      --button-bg: rgba(255,255,255,.06);
+      --button-text: #f3f1ea;
+      --input-bg: rgba(255,255,255,.05);
+      --ring-track: rgba(255,255,255,.14);
+      --font-display: -apple-system, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-body: -apple-system, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     }
 
     [data-theme="light"] {
-      --bg: #f8fafc;
+      --bg: #f4f2ec;
+      --bg-soft: #ece9e1;
       --panel: #ffffff;
-      --panel-2: #e2e8f0;
-      --text: #0f172a;
-      --muted: #475569;
-      --border: rgba(15,23,42,.16);
-      --button-bg: rgba(15,23,42,.08);
-      --button-text: #0f172a;
-      --input-bg: rgba(15,23,42,.06);
-      --shadow: rgba(15,23,42,.12);
+      --panel-2: #f0eee7;
+      --panel-3: #e6e3d9;
+      --text: #17181f;
+      --muted: #6b6b76;
+      --muted-strong: #45454f;
+      --border: rgba(23,24,31,.10);
+      --border-strong: rgba(23,24,31,.20);
+      --button-bg: rgba(23,24,31,.05);
+      --button-text: #17181f;
+      --input-bg: rgba(23,24,31,.04);
+      --shadow: rgba(23,24,31,.14);
+      --ring-track: rgba(23,24,31,.12);
+      --accent-soft: rgba(255,106,61,.12);
     }
 
     [data-theme="contrast"] {
       --bg: #000000;
+      --bg-soft: #000000;
       --panel: #000000;
-      --panel-2: #111111;
+      --panel-2: #0a0a0a;
+      --panel-3: #141414;
       --text: #ffffff;
       --muted: #ffffff;
+      --muted-strong: #ffffff;
       --border: #ffffff;
-      --accent: #ffff00;
+      --border-strong: #ffffff;
+      --accent: #ffe100;
+      --accent-ink: #000000;
+      --accent-soft: rgba(255,225,0,.16);
       --button-bg: #ffffff;
       --button-text: #000000;
       --input-bg: #111111;
-      --danger: #ff5555;
-      --ok: #00ff66;
-      --warning: #ffff00;
+      --danger: #ff6b6b;
+      --ok: #21ff8c;
+      --warning: #ffe100;
+      --ring-track: rgba(255,255,255,.25);
     }
 
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { min-height: 100%; }
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background: var(--bg);
+      font-family: var(--font-body);
+      background:
+        radial-gradient(120% 70% at 50% -10%, var(--bg-soft) 0%, var(--bg) 55%);
+      background-color: var(--bg);
+      background-attachment: fixed;
       color: var(--text);
-      line-height: 1.35;
+      line-height: 1.4;
       -webkit-font-smoothing: antialiased;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
 
     button, input, select, textarea { font: inherit; }
     button {
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-strong);
       background: var(--button-bg);
       color: var(--button-text);
       min-height: 46px;
-      padding: 11px 14px;
-      border-radius: 14px;
+      padding: 11px 16px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
       touch-action: manipulation;
       font-weight: 700;
+      letter-spacing: -.01em;
+      transition: transform .12s ease, background-color .15s ease, opacity .15s ease;
     }
-    button:active { transform: scale(.985); }
+    button:active { transform: scale(.97); }
     button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-      outline: 3px solid var(--accent);
+      outline: 2.5px solid var(--accent);
       outline-offset: 2px;
     }
-    button.primary { background: var(--accent); color: #001018; border-color: transparent; }
-    button.danger { background: var(--danger); color: white; border-color: transparent; }
-    button.ok { background: var(--ok); color: #02120a; border-color: transparent; }
+    button.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+    button.danger { background: var(--danger); color: #200; border-color: transparent; }
+    button.ok { background: var(--ok); color: #022; border-color: transparent; }
     button.warning { background: var(--warning); color: #1a1200; border-color: transparent; }
-    button.ghost { background: transparent; }
-    button.small { min-height: 38px; padding: 8px 10px; border-radius: 10px; font-weight: 650; }
-    button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+    button.ghost { background: transparent; border-color: var(--border); }
+    button.small { min-height: 38px; padding: 8px 12px; border-radius: 10px; font-weight: 650; font-size: 13px; }
+    button:disabled { opacity: .4; cursor: not-allowed; transform: none; }
 
     input, select, textarea {
       width: 100%;
-      border: 1px solid var(--border);
+      border: 1px solid var(--border-strong);
       background: var(--input-bg);
       color: var(--text);
       min-height: 44px;
-      padding: 10px 11px;
-      border-radius: 12px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
     }
     input[type="checkbox"] { width: 22px; min-height: 22px; accent-color: var(--accent); }
     input[type="color"] { min-height: 44px; padding: 4px; }
     textarea { min-height: 110px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 13px; }
-    label { display: block; color: var(--muted); font-size: 13px; font-weight: 750; margin-bottom: 6px; }
+    label { display: block; color: var(--muted); font-size: 12px; font-weight: 750; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
     .checkbox-line { display: flex; gap: 10px; align-items: center; min-height: 44px; }
-    .checkbox-line label { margin: 0; color: var(--text); }
+    .checkbox-line label { margin: 0; color: var(--text); text-transform: none; letter-spacing: 0; font-size: 14px; }
 
-    .app { width: min(100%, 980px); margin: 0 auto; padding: 14px; }
+    .app { width: min(100%, 640px); margin: 0 auto; padding: 16px 14px 40px; }
+
     header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       gap: 10px;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
+      padding: 2px 2px 0;
     }
-    .title { margin: 0; font-size: 22px; letter-spacing: -.02em; }
-    .subtitle { color: var(--muted); font-size: 13px; margin-top: 3px; }
+    .title { margin: 0; font-family: var(--font-display); font-size: 24px; font-weight: 850; letter-spacing: -.03em; }
+    .subtitle { color: var(--muted); font-size: 12.5px; margin-top: 3px; font-weight: 600; }
     .header-actions { display: flex; gap: 8px; align-items: center; }
-    .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 14px; }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+      margin: 4px 0 16px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      padding: 4px;
+      border-radius: 14px;
+    }
     .tabs.collapsed { display: none; }
-    .tabs button { min-height: 40px; font-size: 13px; padding: 8px; }
-    .tabs button.active { background: var(--accent); color: #001018; border-color: transparent; }
+    .tabs button {
+      min-height: 38px;
+      font-size: 12.5px;
+      padding: 8px 4px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      border-radius: 10px;
+      font-weight: 750;
+    }
+    .tabs button.active { background: var(--panel); color: var(--text); box-shadow: 0 2px 8px var(--shadow); }
 
     .card {
       background: var(--panel);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px;
-      box-shadow: 0 12px 30px var(--shadow);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      box-shadow: 0 10px 26px var(--shadow);
       margin-bottom: 12px;
     }
     .row { display: grid; gap: 10px; }
@@ -144,86 +200,161 @@
     .hidden { display: none !important; }
     .muted { color: var(--muted); }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
-    .notice { border-left: 4px solid var(--accent); padding: 10px 12px; background: rgba(56,189,248,.1); border-radius: 12px; color: var(--text); }
-    .error { border-left-color: var(--danger); background: rgba(239,68,68,.12); }
-    .success { border-left-color: var(--ok); background: rgba(34,197,94,.12); }
+    .notice { border-left: 3px solid var(--accent); padding: 10px 13px; background: var(--accent-soft); border-radius: var(--radius-sm); color: var(--text); font-size: 13.5px; }
+    .error { border-left-color: var(--danger); background: rgba(255,84,112,.12); }
+    .success { border-left-color: var(--ok); background: rgba(52,211,153,.12); }
 
+    /* ---------------------------------------------------------
+       Timer stage — circular dial is the app's signature element
+       --------------------------------------------------------- */
     .timer-screen {
-      background: var(--phase-bg);
+      position: relative;
+      background: linear-gradient(165deg, color-mix(in srgb, var(--phase-bg) 92%, black 0%) 0%, color-mix(in srgb, var(--phase-bg) 78%, black 22%) 100%);
       color: var(--phase-text);
-      border-radius: 28px;
-      padding: 20px 14px;
+      border-radius: 30px;
+      padding: 22px 16px 20px;
       text-align: center;
-      min-height: 390px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
-      box-shadow: 0 14px 38px var(--shadow);
+      align-items: center;
+      box-shadow: 0 18px 44px var(--shadow), inset 0 1px 0 rgba(255,255,255,.08);
+      overflow: hidden;
+      transition: background .35s ease;
     }
-    .phase-label {
-      font-size: clamp(36px, 12vw, 92px);
-      line-height: .95;
-      font-weight: 950;
-      letter-spacing: -.05em;
+    .timer-screen.flash::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,.35);
+      animation: flashPulse .32s ease-out;
+      pointer-events: none;
+    }
+    @keyframes flashPulse { from { opacity: 1; } to { opacity: 0; } }
+
+    .sound-status {
+      font-size: 11.5px;
+      font-weight: 750;
       text-transform: uppercase;
-      margin: 8px 0;
-      word-break: break-word;
+      letter-spacing: .07em;
+      opacity: .75;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.22);
+      margin-bottom: 6px;
     }
+    .sound-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+
+    .phase-eyebrow {
+      font-size: clamp(13px, 3.6vw, 15px);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      opacity: .88;
+      margin-top: 6px;
+    }
+
+    .ring-wrap {
+      position: relative;
+      width: min(72vw, 268px);
+      height: min(72vw, 268px);
+      margin: 14px auto 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .ring-wrap svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+    .ring-track { fill: none; stroke: rgba(0,0,0,.22); stroke-width: 7; }
+    .ring-progress { fill: none; stroke: var(--phase-text); stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset .22s linear; opacity: .92; }
+
     .countdown {
-      font-size: clamp(58px, 19vw, 148px);
-      line-height: .9;
-      font-weight: 950;
-      letter-spacing: -.08em;
+      position: relative;
+      font-family: var(--font-display);
+      font-size: clamp(46px, 15vw, 76px);
+      line-height: .92;
+      font-weight: 900;
+      letter-spacing: -.04em;
       font-variant-numeric: tabular-nums;
-      margin: 10px 0 18px;
     }
+
     .counter-strip {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin: 8px auto 12px;
-      width: min(100%, 560px);
+      gap: 8px;
+      margin: 16px auto 4px;
+      width: min(100%, 360px);
     }
     .counter-box {
-      background: rgba(0,0,0,.20);
-      border: 1px solid rgba(255,255,255,.30);
-      border-radius: 16px;
-      padding: 12px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 14px;
+      padding: 10px 8px;
     }
-    .counter-box .num { font-size: clamp(22px, 7vw, 40px); font-weight: 950; font-variant-numeric: tabular-nums; }
-    .counter-box .cap { font-size: 12px; opacity: .85; font-weight: 750; text-transform: uppercase; letter-spacing: .05em; }
-    .timer-meta { font-weight: 750; opacity: .92; margin: 4px 0; }
-    .timer-controls { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px; width: min(100%, 560px); align-self: center; }
-    .timer-controls button { background: rgba(0,0,0,.23); color: inherit; border-color: rgba(255,255,255,.34); }
-    .timer-controls button.primary { background: rgba(255,255,255,.86); color: #000; min-height: 58px; font-size: 20px; }
-    .secondary-controls { display: none; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-top: 8px; }
-    .secondary-controls.open { display: grid; }
-    .secondary-controls button { font-size: 14px; }
-    .timeline-context { display: grid; gap: 6px; }
-    .timeline-row { display: grid; grid-template-columns: 34px 1fr 72px; gap: 8px; align-items: center; padding: 8px 9px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-2); font-size: 13px; }
-    .timeline-row.current { outline: 3px solid var(--accent); background: rgba(56,189,248,.14); }
-    .timeline-row .marker { font-weight: 950; text-align: center; }
+    .counter-box .num { font-size: clamp(17px, 5.4vw, 22px); font-weight: 850; font-variant-numeric: tabular-nums; }
+    .counter-box .cap { font-size: 10.5px; opacity: .78; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; margin-top: 1px; }
 
-    .section-title { margin: 0 0 10px; font-size: 17px; }
+    .timer-meta { font-weight: 650; font-size: 13px; opacity: .82; margin: 3px 0; }
+    .timer-meta.next { opacity: .95; font-weight: 750; }
+
+    .timer-controls { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 18px; width: 100%; }
+    .timer-controls button {
+      background: rgba(0,0,0,.20);
+      color: inherit;
+      border-color: rgba(255,255,255,.22);
+    }
+    .timer-controls button.primary {
+      background: var(--phase-text);
+      color: color-mix(in srgb, var(--phase-bg) 80%, black 20%);
+      min-height: 60px;
+      font-size: 19px;
+      border-radius: 18px;
+      font-weight: 850;
+      letter-spacing: -.01em;
+      box-shadow: 0 10px 22px rgba(0,0,0,.28);
+    }
+    .secondary-controls { display: none; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px; margin-top: 2px; }
+    .secondary-controls.open { display: grid; }
+    .secondary-controls button { font-size: 13.5px; }
+
+    .timeline-context { display: grid; gap: 6px; }
+    .timeline-row {
+      display: grid;
+      grid-template-columns: 30px 1fr 68px;
+      gap: 8px;
+      align-items: center;
+      padding: 9px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--panel-2);
+      font-size: 13px;
+    }
+    .timeline-row.current { outline: 2px solid var(--accent); background: var(--accent-soft); }
+    .timeline-row .marker { font-weight: 900; text-align: center; color: var(--muted); }
+    .timeline-row.current .marker { color: var(--accent); }
+
+    .section-title { margin: 0 0 12px; font-family: var(--font-display); font-size: 16px; font-weight: 800; letter-spacing: -.01em; }
     .phase-grid { display: grid; gap: 10px; }
     details {
       border: 1px solid var(--border);
       background: var(--panel-2);
-      border-radius: 16px;
-      padding: 10px;
+      border-radius: var(--radius);
+      padding: 10px 12px;
     }
-    summary { cursor: pointer; font-weight: 850; min-height: 34px; display: flex; align-items: center; }
+    summary { cursor: pointer; font-weight: 800; min-height: 34px; display: flex; align-items: center; font-size: 14px; }
     summary::-webkit-details-marker { display: none; }
     .phase-editor-body { margin-top: 10px; }
-    .preview-list { max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: 14px; }
+    .preview-list { max-height: 360px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius); }
     .preview-item { display: grid; grid-template-columns: 84px 1fr 66px; gap: 8px; padding: 9px 10px; border-bottom: 1px solid var(--border); align-items: center; }
     .preview-item:last-child { border-bottom: 0; }
-    .pill { display: inline-block; border: 1px solid var(--border); border-radius: 999px; padding: 4px 8px; font-size: 12px; font-weight: 800; color: var(--muted); }
+    .pill { display: inline-block; border: 1px solid var(--border-strong); border-radius: 999px; padding: 4px 9px; font-size: 11.5px; font-weight: 800; color: var(--muted); }
 
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.7);
+      background: rgba(0,0,0,.72);
+      backdrop-filter: blur(2px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -231,20 +362,22 @@
       z-index: 100;
     }
     .modal {
-      width: min(100%, 460px);
+      width: min(100%, 420px);
       background: var(--panel);
       color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      padding: 16px;
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-lg);
+      padding: 20px;
       box-shadow: 0 24px 70px rgba(0,0,0,.55);
     }
-    .modal h2 { margin: 0 0 8px; }
-    .modal .actions { margin-top: 14px; }
+    .modal h2 { margin: 0 0 8px; font-family: var(--font-display); font-size: 18px; }
+    .modal .actions { margin-top: 16px; }
 
-    @media (max-width: 720px) {
-      .app { padding: 10px; }
-      .tabs { grid-template-columns: repeat(2, 1fr); }
+    @media (min-width: 560px) {
+      .tabs button { font-size: 13.5px; }
+    }
+
+    @media (max-width: 400px) {
       .cols-2, .cols-3, .cols-4 { grid-template-columns: 1fr; }
       .secondary-controls { grid-template-columns: 1fr; }
       .preview-item { grid-template-columns: 70px 1fr 54px; font-size: 13px; }
@@ -279,9 +412,15 @@
     <main>
       <section id="viewTimer">
         <div id="timerScreen" class="timer-screen" aria-live="polite">
-          <div class="timer-meta" id="soundStatus">Sound: tap Start to enable</div>
-          <div class="phase-label" id="phaseLabel">Ready</div>
-          <div class="countdown" id="countdown">00:00</div>
+          <div class="sound-status" id="soundStatus">Sound: tap Start to enable</div>
+          <div class="phase-eyebrow" id="phaseLabel">Ready</div>
+          <div class="ring-wrap">
+            <svg viewBox="0 0 100 100">
+              <circle class="ring-track" cx="50" cy="50" r="44"></circle>
+              <circle class="ring-progress" id="ringProgress" cx="50" cy="50" r="44"></circle>
+            </svg>
+            <div class="countdown" id="countdown">00:00</div>
+          </div>
           <div class="counter-strip">
             <div class="counter-box">
               <div class="num" id="repCounter">Rep 0 / 0</div>
@@ -292,7 +431,7 @@
               <div class="cap">Set</div>
             </div>
           </div>
-          <div class="timer-meta" id="nextPhase">Next: —</div>
+          <div class="timer-meta next" id="nextPhase">Next: —</div>
           <div class="timer-meta" id="presetName">Preset: —</div>
           <div class="timer-controls">
             <button id="startPauseBtn" class="primary" type="button">Start</button>
@@ -304,6 +443,12 @@
               <button id="resetBtn" class="danger" type="button">Reset</button>
             </div>
           </div>
+        </div>
+
+        <div class="card">
+          <h2 class="section-title">Timeline</h2>
+          <p class="muted">Showing the previous 5 steps, current step, and next 5 steps.</p>
+          <div id="timerTimeline" class="timeline-context"></div>
         </div>
 
         <div class="card">
@@ -323,12 +468,6 @@
             </div>
           </div>
           <p class="muted" id="presetDescription"></p>
-        </div>
-
-        <div class="card">
-          <h2 class="section-title">Timeline</h2>
-          <p class="muted">Showing the previous 5 steps, current step, and next 5 steps.</p>
-          <div id="timerTimeline" class="timeline-context"></div>
         </div>
       </section>
 
@@ -456,8 +595,11 @@
           </div>
         </div>
         <div class="card">
-          <h2 class="section-title">Notes for iPhone</h2>
-          <p class="muted">To use as a home-screen app, open the HTML in Safari or host it once, then use Share → Add to Home Screen. iPhone audio requires a user tap before sounds can play.</p>
+          <h2 class="section-title">Notes for iPhone sound</h2>
+          <p class="muted">To use as a home-screen app, open the HTML in Safari, then Share → Add to Home Screen.</p>
+          <p class="muted">iPhone audio needs a real tap before any sound can play — tapping Start (or any button) unlocks it for the session. If sound still doesn't play, check these iPhone-level settings, which no web app can override:</p>
+          <p class="muted">• The physical Ring/Silent switch on the side of the phone — if it shows orange, all web sounds are muted.<br>• Low Power Mode and Focus modes can also mute or interrupt background audio.<br>• If the screen locks, iOS suspends the sound engine; this app requests a screen wake lock while a session is running to help keep it awake, but you may still need to disable Auto-Lock in Settings → Display & Brightness for long sessions.</p>
+          <p class="muted">As a backup, the timer screen flashes on every cue in addition to the sound, so you still get a signal if the phone is on silent.</p>
         </div>
       </section>
     </main>
@@ -574,6 +716,8 @@
     let audioCtx = null;
     let audioReady = false;
     let audioUnlocking = null;
+    let wakeLock = null;
+    const RING_CIRCUMFERENCE = 2 * Math.PI * 44;
 
     const $ = (id) => document.getElementById(id);
 
@@ -767,6 +911,7 @@
        ========================================================= */
     function startPreset(preset) {
       initAudio(true);
+      requestWakeLock();
       runtime.timeline = buildTimeline(preset);
       runtime.index = -1;
       runtime.remaining = 0;
@@ -831,8 +976,11 @@
       runtime.paused = !runtime.paused;
       if (runtime.paused) {
         clearInterval(runtime.interval);
+        releaseWakeLock();
       } else {
         beginTicking();
+        requestWakeLock();
+        reclaimAudioIfNeeded();
       }
       renderCurrent();
     }
@@ -840,6 +988,7 @@
     function resetTimer() {
       clearInterval(runtime.interval);
       runtime = { timeline: [], index: -1, remaining: 0, running: false, paused: false, interval: null, awaitingAck: false, lastTick: null };
+      releaseWakeLock();
       renderReady();
     }
 
@@ -848,6 +997,7 @@
       runtime.running = false;
       runtime.paused = false;
       runtime.awaitingAck = false;
+      releaseWakeLock();
       $("startPauseBtn").textContent = "Start";
       if (clearRun) renderReady();
       renderTimelineContext();
@@ -918,6 +1068,14 @@
 
     /* =========================================================
        Sound engine
+       iOS Safari quirks handled here:
+       - AudioContext can only be created/resumed from inside a real
+         user gesture, and it gets silently re-suspended whenever the
+         tab is backgrounded, the screen locks, or a call/notification
+         interrupts it (state becomes "interrupted", not "suspended").
+       - The hardware mute (ring/silent) switch mutes Web Audio output
+         at the OS level; no web API can override that, so we surface
+         a warning instead of pretending sound is guaranteed.
        ========================================================= */
     function initAudio(forceUnlock) {
       if (audioReady && audioCtx && audioCtx.state === "running") return Promise.resolve(true);
@@ -926,9 +1084,16 @@
         const Ctx = window.AudioContext || window.webkitAudioContext;
         if (!Ctx) throw new Error("Web Audio unavailable");
         audioCtx = audioCtx || new Ctx();
-        const resumePromise = audioCtx.state === "suspended" ? audioCtx.resume() : Promise.resolve();
+        const resumePromise = audioCtx.state !== "running" ? audioCtx.resume() : Promise.resolve();
         audioUnlocking = resumePromise.then(function () {
           if (forceUnlock) {
+            // Play a real (near-silent) buffer through the graph. On iOS this
+            // is a more reliable unlock than an oscillator start/stop pair.
+            const buffer = audioCtx.createBuffer(1, 1, 22050);
+            const src = audioCtx.createBufferSource();
+            src.buffer = buffer;
+            src.connect(audioCtx.destination);
+            src.start(0);
             const g = audioCtx.createGain();
             g.gain.value = 0.00001;
             const o = audioCtx.createOscillator();
@@ -937,22 +1102,38 @@
             o.start();
             o.stop(audioCtx.currentTime + 0.03);
           }
-          audioReady = audioCtx.state === "running" || audioCtx.state === "interrupted";
-          $("soundStatus").textContent = audioReady ? "Sound: Ready" : "Sound: tap Start to enable";
+          audioReady = audioCtx.state === "running";
+          updateSoundStatus();
           audioUnlocking = null;
           return audioReady;
         }).catch(function () {
           audioReady = false;
           audioUnlocking = null;
-          $("soundStatus").textContent = "Sound: blocked by iPhone";
+          updateSoundStatus();
           return false;
         });
         return audioUnlocking;
       } catch (err) {
         audioReady = false;
-        $("soundStatus").textContent = "Sound: unavailable";
+        $("soundStatus").textContent = "Sound: unavailable on this browser";
         return Promise.resolve(false);
       }
+    }
+
+    function updateSoundStatus() {
+      const el = $("soundStatus");
+      if (!el) return;
+      if (audioReady) el.textContent = "Sound: ready (check the mute switch if silent)";
+      else if (audioCtx && (audioCtx.state === "interrupted" || audioCtx.state === "suspended")) el.textContent = "Sound: tap Start to re-enable";
+      else el.textContent = "Sound: tap Start to enable";
+    }
+
+    // Re-arm audio whenever the page regains focus/visibility — iOS
+    // suspends the AudioContext on lock/background and does not resume
+    // it automatically even once the tab is visible again.
+    function reclaimAudioIfNeeded() {
+      if (!audioCtx) return;
+      if (audioCtx.state !== "running") initAudio(false);
     }
 
     function tone(freq, start, duration, gain, type) {
@@ -974,28 +1155,62 @@
 
     function scheduleSound(name) {
       if (!name || name === "silent" || !audioCtx) return;
-      if (name === "softBell") { tone(660, 0, .28, .10); tone(990, .05, .34, .075); }
-      else if (name === "sharpBell") { tone(880, 0, .18, .14, "triangle"); tone(1320, .03, .12, .06, "sine"); }
-      else if (name === "doubleBeep") { tone(740, 0, .12, .12); tone(740, .20, .12, .12); }
-      else if (name === "lowBeep") { tone(330, 0, .26, .13, "sine"); }
-      else if (name === "longBell") { tone(523, 0, .50, .11); tone(784, .08, .62, .08); }
-      else if (name === "successChime") { tone(523, 0, .16, .10); tone(659, .16, .16, .10); tone(784, .32, .34, .11); }
-      else if (name === "warningTone") { tone(220, 0, .22, .13, "square"); tone(220, .32, .22, .13, "square"); }
+      if (name === "softBell") { tone(660, 0, .28, .12); tone(990, .05, .34, .09); }
+      else if (name === "sharpBell") { tone(880, 0, .18, .16, "triangle"); tone(1320, .03, .12, .08, "sine"); }
+      else if (name === "doubleBeep") { tone(740, 0, .12, .14); tone(740, .20, .12, .14); }
+      else if (name === "lowBeep") { tone(330, 0, .26, .15, "sine"); }
+      else if (name === "longBell") { tone(523, 0, .50, .13); tone(784, .08, .62, .10); }
+      else if (name === "successChime") { tone(523, 0, .16, .12); tone(659, .16, .16, .12); tone(784, .32, .34, .13); }
+      else if (name === "warningTone") { tone(220, 0, .22, .15, "square"); tone(220, .32, .22, .15, "square"); }
     }
 
     function playSound(name) {
+      flashTimerScreen();
       if (!name || name === "silent") return;
       try {
         initAudio(false).then(function (ok) {
           if (!ok || !audioCtx) return;
-          if (audioCtx.state === "suspended") {
-            audioCtx.resume().then(function () { scheduleSound(name); });
+          if (audioCtx.state !== "running") {
+            audioCtx.resume().then(function () { if (audioCtx.state === "running") scheduleSound(name); });
           } else {
             scheduleSound(name);
           }
         });
       } catch (err) {
-        $("soundStatus").textContent = "Sound: blocked";
+        updateSoundStatus();
+      }
+    }
+
+    // A brief flash on the timer stage backs up every sound cue visually,
+    // since the iPhone mute switch can silence audio outside our control.
+    function flashTimerScreen() {
+      const el = $("timerScreen");
+      if (!el) return;
+      el.classList.remove("flash");
+      // Force reflow so the animation can restart on rapid repeats.
+      void el.offsetWidth;
+      el.classList.add("flash");
+    }
+
+    /* =========================================================
+       Screen wake lock — keeps the display (and therefore the
+       audio context) alive during an active session on iOS.
+       ========================================================= */
+    async function requestWakeLock() {
+      try {
+        if ("wakeLock" in navigator) {
+          wakeLock = await navigator.wakeLock.request("screen");
+          wakeLock.addEventListener("release", function () { wakeLock = null; });
+        }
+      } catch (err) {
+        wakeLock = null;
+      }
+    }
+
+    function releaseWakeLock() {
+      if (wakeLock) {
+        wakeLock.release().catch(function () {});
+        wakeLock = null;
       }
     }
 
@@ -1052,6 +1267,7 @@
       $("nextPhase").textContent = "Next: " + firstPhaseLabel(p);
       $("presetName").textContent = "Preset: " + p.name;
       $("startPauseBtn").textContent = "Start";
+      setRingProgress(0);
     }
 
     function renderCurrent() {
@@ -1071,6 +1287,15 @@
       $("nextPhase").textContent = "Next: " + getNextLabel();
       $("presetName").textContent = "Preset: " + getSelectedPreset().name;
       $("startPauseBtn").textContent = runtime.paused ? "Resume" : "Pause";
+      const total = item.durationSeconds || 0;
+      setRingProgress(total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0);
+    }
+
+    function setRingProgress(fraction) {
+      const ring = $("ringProgress");
+      if (!ring) return;
+      ring.style.strokeDasharray = String(RING_CIRCUMFERENCE);
+      ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - fraction));
     }
 
     function renderTimelineContext() {
@@ -1433,7 +1658,17 @@
       $("importJsonBtn").onclick = importJson;
       $("testSoundBtn").onclick = () => { initAudio(); playSound($("soundTestSelect").value); };
       $("installHelpBtn").onclick = () => showModal("Add to Home Screen", "On iPhone: open this file in Safari, tap Share, then Add to Home Screen. For best PWA behavior, host the same HTML once and add it from Safari.", [{ text: "OK", cls: "primary", action: hideModal }]);
-      document.addEventListener("visibilitychange", () => { if (document.hidden && runtime.running && !runtime.paused) toggleStartPause(); });
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) {
+          if (runtime.running && !runtime.paused) toggleStartPause();
+        } else {
+          reclaimAudioIfNeeded();
+          if (runtime.running && !runtime.paused) requestWakeLock();
+        }
+      });
+      // A first touch anywhere widens the chance of a valid unlock
+      // gesture on iOS, in case the person doesn't tap Start first.
+      document.addEventListener("pointerdown", () => initAudio(true), { once: true, passive: true });
     }
 
     wireEvents();
